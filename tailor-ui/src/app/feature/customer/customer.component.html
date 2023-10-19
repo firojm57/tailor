@@ -1,0 +1,84 @@
+<!-- Customer Listing -->
+<div class="p-2">
+  <!-- Search Input -->
+  <input placeholder="Search by Name or Phone Number"
+    class="w-full mb-4 p-2 border border-primary border-opacity-40 rounded shadow-sm" [(ngModel)]="searchTerm" />
+  <!-- Customer List as Rows -->
+  <div class="shadow-sm border rounded-lg">
+    <table class="w-full border-collapse">
+      <thead class="border-b">
+        <tr class="text-left">
+          <th class="py-2 px-4 bg-gray-200">Customer Name</th>
+          <th class="py-2 px-4 bg-gray-200">Mobile Number</th>
+          <th class="py-2 px-4 text-end bg-gray-200">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        <tr *ngFor="let customer of customers">
+          <td class="py-2 px-4 text-primary cursor-pointer hover:underline"
+            (click)="onCustomerClick(customer)">
+            {{customer.name}}
+          </td>
+          <td class="py-2 px-4">{{customer.phone}}</td>
+          <td class="py-2 px-4">
+            <div class="flex justify-end gap-x-4">
+              <button class="p-1" (click)="onEditCustomerRow(customer.id)">
+                <i class="text-l text-primary fa-solid fa-pen"></i>
+              </button>
+              <button class="p-1" (click)="onDeleteCustomer(customer.id)">
+                <i class="text-l text-danger text-opacity-75 fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-4 flex items-center justify-end">
+    <button class="btn-primary">
+      <i class="fa-solid fa-plus pr-1"></i>Add
+    </button>
+  </div>
+</div>
+
+<!-- Customer Details Popup (Hidden by default) -->
+<div class="fixed inset-0 items-center justify-center bg-gray-700 bg-opacity-50"
+  [ngClass]="selectedCustomer ? 'flex' : 'hidden'">
+  <!-- Customer details -->
+  <div class="bg-white mx-auto rounded shadow-lg z-50 p-6">
+    <div class="flex justify-between items-center">
+      <h4 class="font-medium">Customer Details</h4>
+      <div class="flex gap-x-4">
+        <button class="btn-primary" (click)="onEditCustomer(selectedCustomer)">Edit</button>
+        <button class="btn-danger p-2"
+          (click)="closeCustomerDetails()"><i class="px-2 fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <!-- Customer Details Content (Replace with your data) -->
+    <div class="flex flex-col gap-y-1 py-2">
+      <p>Name: {{selectedCustomer && selectedCustomer.name}}</p>
+      <p>Phone: {{selectedCustomer && selectedCustomer.phone}}</p>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="rounded-lg p-4 shadow-md">
+        <h2 class="mb-2">Address</h2>
+        <p>line 1</p>
+        <p>City</p>
+        <p>Zip code</p>
+      </div>
+      <div class="rounded-lg p-4 shadow-md">
+        <h2 class="mb-2">Shirt Measurements</h2>
+        <div><span class="font-semibold">Length:</span> 42</div>
+        <div><span class="font-semibold">Shoulder:</span> 30</div>
+        <div><span class="font-semibold">Chest:</span> 34</div>
+      </div>
+      <div class="rounded-lg p-4 shadow-md">
+        <h2 class="mb-2">Pant Measurements</h2>
+        <div><span>Length:</span> 40</div>
+        <div><span>West:</span> 32</div>
+        <div><span>Hip:</span> 34</div>
+      </div>
+      <!-- End of Customer Details Content -->
+    </div>
+  </div>
+</div>

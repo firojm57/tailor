@@ -1,0 +1,126 @@
+<div class="p-4">
+  <div [hidden]="selectedBill">
+    <!-- Search Input -->
+    <input placeholder="Search by Name or Phone Number"
+      class="w-full mb-4 p-2 border border-primary border-opacity-40 rounded shadow-sm" [(ngModel)]="searchTerm" />
+    <!-- Customer List as Rows -->
+    <div class="shadow-sm border rounded-lg">
+      <table class="w-full border-collapse">
+        <thead class="border-b">
+          <tr class="text-left">
+            <th class="py-2 px-4 bg-gray-200">Bill Number</th>
+            <th class="py-2 px-4 bg-gray-200">Customer Name</th>
+            <th class="py-2 px-4 bg-gray-200">Customer Phone</th>
+            <th class="py-2 px-4 text-end bg-gray-200">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          <tr *ngFor="let bill of billingList">
+            <td class="py-2 px-4 text-primary cursor-pointer hover:underline"
+              (click)="onBillClick(bill)">
+              {{bill.billId}}
+            </td>
+            <td class="py-2 px-4">{{bill.customerName}}</td>
+            <td class="py-2 px-4">{{bill.customerPhone}}</td>
+            <td class="py-2 px-4">
+              <div class="flex justify-end gap-x-4">
+                <button class="p-1">
+                  <i class="text-l text-primary fa-solid fa-pen"></i>
+                </button>
+                <button class="p-1">
+                  <i class="text-l text-danger text-opacity-75 fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-4 flex items-center justify-end">
+      <button class="btn-primary">
+        <i class="fa-solid fa-plus pr-1"></i>Add
+      </button>
+    </div>
+  </div>
+  <div [hidden]="!selectedBill">
+    <h2 class="font-medium">My Tailor Shop</h2>
+    <div class="flex justify-between border-b border-gray-300 mt-2 pb-1">
+      <span>This is the address of the shop</span>
+      <div>
+        <i class="fa-solid fa-phone mx-1"></i> 9876543210 | 9888777660
+      </div>
+    </div>
+    <div class="flex justify-between mt-6 gap-x-4">
+      <span>Name: {{selectedBill && selectedBill.customerName}}</span>
+      <span>Phone: {{selectedBill && selectedBill.customerPhone}}</span>
+    </div>
+    <div class="mb-4">
+      <p>Customer City, State ZIP</p>
+    </div>
+    <div class="mb-4">
+      <div class="flex justify-between font-medium">
+        <div>
+          <p>Bill ID: #12345</p>
+          <p>Bill Date: August 20, 2023</p>
+        </div>
+        <div>
+          <p>Due Date: August 30, 2023</p>
+        </div>
+      </div>
+    </div>
+    <table class="w-full border-collapse">
+      <thead>
+        <tr class="text-left">
+          <th class="py-2 px-4 bg-gray-200">Item</th>
+          <th class="py-2 px-4 bg-gray-200">Quantity</th>
+          <th class="py-2 px-4 bg-gray-200">Price</th>
+          <th class="py-2 px-4 bg-gray-200">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Repeat this section for each item -->
+        <tr>
+          <td class="py-2 px-4">Item 1</td>
+          <td class="py-2 px-4">2</td>
+          <td class="py-2 px-4">50.00</td>
+          <td class="py-2 px-4">100.00</td>
+        </tr>
+        <!-- Repeat this section for each item -->
+        <tr>
+          <td class="py-2 px-4">Item 1</td>
+          <td class="py-2 px-4">2</td>
+          <td class="py-2 px-4">50.00</td>
+          <td class="py-2 px-4">100.00</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="mt-4 pb-4 flex justify-end border-b border-gray-300">
+      <div>
+        <p><span class="font-semibold px-2">Subtotal:</span> 100.00</p>
+        <p><span class="font-semibold px-2">Tax (10%):</span> 10.00</p>
+        <p><span class="font-semibold px-2">Total:</span> 110.00</p>
+      </div>
+    </div>
+    <!-- Payment and Shipping Details (2x2 Grid) -->
+    <div class="grid grid-cols-2 gap-4">
+      <!-- Payment Details Box -->
+      <div class="p-4 rounded">
+        <h2 class="mb-2">Shirt Measurements</h2>
+        <div><span class="font-semibold">Length:</span> 42</div>
+        <div><span class="font-semibold">Shoulder:</span> 30</div>
+        <div><span class="font-semibold">Chest:</span> 34</div>
+      </div>
+      <!-- Shipping Details Box -->
+      <div class="p-4 rounded">
+        <h2 class="mb-2">Pant Measurements</h2>
+        <div><span>Length:</span> 40</div>
+        <div><span>West:</span> 32</div>
+        <div><span>Hip:</span> 34</div>
+      </div>
+    </div>
+    <div class="mt-8 flex justify-center gap-x-6">
+      <button type="button" class="btn-secondary" (click)="printInvoice()">Clear</button>
+      <button type="button" class="btn-primary" (click)="printInvoice()">Print Invoice</button>
+    </div>
+  </div>
+</div>

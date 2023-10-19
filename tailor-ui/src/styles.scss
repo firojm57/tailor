@@ -1,0 +1,33 @@
+/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply text-sm
+}
+
+@layer components {
+  .btn-primary {
+    @apply text-white rounded bg-primary py-2 px-4 shadow-md;
+    &:hover {
+      @apply outline-none bg-opacity-80;
+    }
+  }
+
+  .btn-secondary {
+    @apply text-white rounded bg-secondary py-2 px-4 shadow-md;
+    &:hover {
+      @apply outline-none bg-opacity-80;
+    }
+  }
+
+  .btn-danger {
+    @apply text-white rounded bg-danger py-2 px-4 shadow-md;
+    &:hover {
+      @apply outline-none bg-opacity-80;
+    }
+  }
+}
