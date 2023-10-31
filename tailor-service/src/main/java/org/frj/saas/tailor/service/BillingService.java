@@ -18,8 +18,7 @@ public class BillingService {
     public List<BillingModel> getAllBills() {
         List<BillingDto> allBills = billingDao.getAllBills();
         return allBills.stream().map(dto -> new BillingModel(
-                dto.getBillId(), dto.getBillDate(), dto.getDueDate(), dto.getPaidAmount(),
-                dto.getPendingAmount(), dto.getCustId(), dto.getQuantity(), dto.getRate()
+                dto.getBillId(), dto.getCustId(), dto.getCustName(), dto.getCustMobile()
         )).collect(Collectors.toList());
     }
 

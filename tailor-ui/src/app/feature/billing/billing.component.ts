@@ -1,22 +1,26 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Billing } from 'src/app/model/billing.model';
+import { BillingService } from 'src/app/service/billing/billing.service';
 
 @Component({
   selector: 'app-billing',
   templateUrl: './billing.component.html',
   styleUrls: ['./billing.component.scss']
 })
-export class BillingComponent {
+export class BillingComponent implements OnInit {
   billingList: Billing [] = [];
   selectedBill: Billing | null = null;
   listView: boolean;
   searchTerm: string = '';
 
-  constructor() {
-    this.billingList.push(new Billing("1", "John", "9876543210"));
-    this.billingList.push(new Billing("2", "Smith", "9638527410"));
-    this.billingList.push(new Billing("3", "Clara", "9517538520"));
+  constructor(private billingService: BillingService) {
     this.listView = true;
+  }
+
+  ngOnInit(): void {
+    this.billingService.getAllBills().subscribe((value: Billing[]) => {
+      this.billingList = value;
+    });
   }
 
   printInvoice() {

@@ -20,8 +20,8 @@
               (click)="onBillClick(bill)">
               {{bill.billId}}
             </td>
-            <td class="py-2 px-4">{{bill.customerName}}</td>
-            <td class="py-2 px-4">{{bill.customerPhone}}</td>
+            <td class="py-2 px-4">{{bill.custName}}</td>
+            <td class="py-2 px-4">{{bill.custMobile}}</td>
             <td class="py-2 px-4">
               <div class="flex justify-end gap-x-4">
                 <button class="p-1">
@@ -51,8 +51,8 @@
       </div>
     </div>
     <div class="flex justify-between mt-6 gap-x-4">
-      <span>Name: {{selectedBill && selectedBill.customerName}}</span>
-      <span>Phone: {{selectedBill && selectedBill.customerPhone}}</span>
+      <span>Name: {{selectedBill && selectedBill.custName}}</span>
+      <span>Phone: {{selectedBill && selectedBill.custMobile}}</span>
     </div>
     <div class="mb-4">
       <p>Customer City, State ZIP</p>

@@ -1,5 +1,8 @@
 export class Billing {
-    constructor(public billId: string,
-        public customerName: string,
-        public customerPhone: string) {}
+    constructor(
+        public billId: string,
+        public custId: number,
+        public custName: string,
+        public custMobile: string
+    ) {}
 }
