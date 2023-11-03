@@ -19,7 +19,7 @@
             (click)="onCustomerClick(customer)">
             {{customer.name}}
           </td>
-          <td class="py-2 px-4">{{customer.phone}}</td>
+          <td class="py-2 px-4">{{customer.mobile}}</td>
           <td class="py-2 px-4">
             <div class="flex justify-end gap-x-4">
               <button class="p-1" (click)="onEditCustomerRow(customer.id)">
@@ -57,7 +57,7 @@
     <!-- Customer Details Content (Replace with your data) -->
     <div class="flex flex-col gap-y-1 py-2">
       <p>Name: {{selectedCustomer && selectedCustomer.name}}</p>
-      <p>Phone: {{selectedCustomer && selectedCustomer.phone}}</p>
+      <p>Phone: {{selectedCustomer && selectedCustomer.mobile}}</p>
     </div>
     <div class="grid grid-cols-2 gap-4">
       <div class="rounded-lg p-4 shadow-md">

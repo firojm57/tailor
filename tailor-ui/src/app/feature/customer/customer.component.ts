@@ -12,9 +12,9 @@ export class CustomerComponent {
   selectedCustomer: Customer | null = null;
 
   constructor() {
-    this.customers.push(new Customer("1", "John", "9876543210"));
-    this.customers.push(new Customer("2", "Smith", "9638527410"));
-    this.customers.push(new Customer("3", "Clara", "9517538520"));
+    this.customers.push(new Customer("1", "John", "9876543210", "Solapur, India"));
+    this.customers.push(new Customer("2", "Smith", "9638527410", "Pune, India"));
+    this.customers.push(new Customer("3", "Clara", "9517538520", "Hyderabad, India"));
   }
 
   onCustomerClick(customer: Customer) {

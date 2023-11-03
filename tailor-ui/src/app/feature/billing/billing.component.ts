@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Billing } from 'src/app/model/billing.model';
+import { BillDetail, Billing } from 'src/app/model/billing.model';
 import { BillingService } from 'src/app/service/billing/billing.service';
 
 @Component({
@@ -9,12 +9,12 @@ import { BillingService } from 'src/app/service/billing/billing.service';
 })
 export class BillingComponent implements OnInit {
   billingList: Billing [] = [];
-  selectedBill: Billing | null = null;
-  listView: boolean;
+  selectedBill: BillDetail | null = null;
   searchTerm: string = '';
+  billTotal: number = 0;
+  advance: number = 100;
 
   constructor(private billingService: BillingService) {
-    this.listView = true;
   }
 
   ngOnInit(): void {
@@ -27,8 +27,20 @@ export class BillingComponent implements OnInit {
     console.info("print");
   }
 
+  onBackClick() {
+    this.selectedBill = null;
+  }
+
   onBillClick(bill: Billing) {
-    this.selectedBill = bill;
-    this.listView = false;
+    this.billingService.getBillDetails(bill.billId).subscribe((value: BillDetail) =>{
+      if(value) {
+        this.selectedBill = value;
+        if(this.selectedBill.billingItems) {
+          for(let item of this.selectedBill.billingItems) {
+            this.billTotal += (item.quantity * item.rate);
+          }
+        }
+      }
+    });
   }
 }

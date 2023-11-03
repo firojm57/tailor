@@ -23,26 +23,17 @@ create table varieties (
 
 drop table if exists customer cascade;
 create table customer (
-    id bigserial primary key,
+    cust_id bigserial primary key,
     name varchar(255) not null,
     address varchar(1024),
     mobile varchar(50) not null
-);
-
--- measure_data will have keys from variety(measure_list) and values from user (ui)
--- this table is actual object of measurements and varieties is blue print
-drop table if exists measurements cascade;
-create table measurements (
-    id bigserial primary key,
-    type varchar(255) references varieties(type),
-    cust_id bigint references customer(id),
-    measure_data json
 );
 
 drop table if exists billing cascade;
 create table billing (
     id bigserial primary key,
     bill_id varchar(255) unique not null,
+    cust_id bigint references customer(cust_id),
     bill_date date,
     due_date date,
     paid_amount numeric,
@@ -50,11 +41,13 @@ create table billing (
 );
 
 -- this table contains multiple quantity and rate for one bill
+-- measure_data will have keys from variety(measure_list) and values from user (ui)
 drop table if exists billing_items cascade;
 create table billing_items (
     id bigserial primary key,
     bill_id varchar(255) references billing(bill_id),
-    cust_id bigint references customer(id),
+    type varchar(255) references varieties(type),
     quantity int,
-    rate numeric
+    rate numeric,
+    measure_data json
 );
