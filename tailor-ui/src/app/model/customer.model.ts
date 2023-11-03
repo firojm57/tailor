@@ -1,5 +1,6 @@
 export class Customer {
   constructor(public id: string,
     public name: string,
-    public phone: string) {}
+    public mobile: string,
+    public address: string) {}
 }

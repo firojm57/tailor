@@ -12,4 +12,8 @@ export class UrlService {
   getAllBillings(): string {
     return `${this.apiBaseUrl}/bills`;
   }
+
+  getBillDetails(billId: string): string {
+    return `${this.apiBaseUrl}/bills/${billId}`;
+  }
 }
