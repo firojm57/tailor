@@ -10,6 +10,7 @@ import { BillingComponent } from './feature/billing/billing.component';
 import { VarietyComponent } from './feature/variety/variety.component';
 import { CustomerComponent } from './feature/customer/customer.component';
 import { ReportComponent } from './feature/report/report.component';
+import { TagInputComponent } from './shared/tag-input/tag-input.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import { ReportComponent } from './feature/report/report.component';
     BillingComponent,
     VarietyComponent,
     CustomerComponent,
-    ReportComponent
+    ReportComponent,
+    TagInputComponent
   ],
   imports: [
     BrowserModule,

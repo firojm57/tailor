@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.frj.saas.tailor.model.bill.BillDetailModel;
 import org.frj.saas.tailor.model.bill.BillingModel;
 import org.frj.saas.tailor.service.BillingService;
+import org.frj.saas.tailor.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +22,13 @@ public class BillingController {
     @Autowired
     private BillingService service;
 
-    @GetMapping("/bills")
+    @GetMapping(Constants.BILLING_ENDPOINT)
     public ResponseEntity<?> getAllBills() {
         List<BillingModel> bills = service.getAllBills();
         return ResponseEntity.ok(bills);
     }
 
-    @GetMapping("/bills/{billId}")
+    @GetMapping(Constants.BILLING_BILLID_ENDPOINT)
     public ResponseEntity<?> getBillById(@PathVariable String billId) {
         BillDetailModel billDetail;
         try {

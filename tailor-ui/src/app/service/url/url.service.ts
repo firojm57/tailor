@@ -9,11 +9,19 @@ export class UrlService {
 
   constructor() { }
 
-  getAllBillings(): string {
+  getBillingEndpoint(): string {
     return `${this.apiBaseUrl}/bills`;
   }
 
-  getBillDetails(billId: string): string {
+  getBillingIdEndpoint(billId: string): string {
     return `${this.apiBaseUrl}/bills/${billId}`;
+  }
+
+  getVarietiesEndpoint(): string {
+    return `${this.apiBaseUrl}/varieties`;
+  }
+
+  getVarietyIdEndpoint(type: number): string {
+    return `${this.apiBaseUrl}/varieties/${type}`;
   }
 }

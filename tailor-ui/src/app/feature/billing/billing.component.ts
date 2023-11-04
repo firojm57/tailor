@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { BillDetail, Billing } from 'src/app/model/billing.model';
-import { BillingService } from 'src/app/service/billing/billing.service';
+import { ApiService } from 'src/app/service/api/api.service';
 
 @Component({
   selector: 'app-billing',
@@ -14,11 +14,11 @@ export class BillingComponent implements OnInit {
   billTotal: number = 0;
   advance: number = 100;
 
-  constructor(private billingService: BillingService) {
+  constructor(private apiService: ApiService) {
   }
 
   ngOnInit(): void {
-    this.billingService.getAllBills().subscribe((value: Billing[]) => {
+    this.apiService.getAllBills().subscribe((value: Billing[]) => {
       this.billingList = value;
     });
   }
@@ -32,7 +32,7 @@ export class BillingComponent implements OnInit {
   }
 
   onBillClick(bill: Billing) {
-    this.billingService.getBillDetails(bill.billId).subscribe((value: BillDetail) =>{
+    this.apiService.getBillDetails(bill.billId).subscribe((value: BillDetail) =>{
       if(value) {
         this.selectedBill = value;
         if(this.selectedBill.billingItems) {

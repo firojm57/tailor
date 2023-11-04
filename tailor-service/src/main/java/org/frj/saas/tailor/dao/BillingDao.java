@@ -36,7 +36,7 @@ public class BillingDao {
     public BillDetailDto getBillDetailById(String billId) {
         String query = """
             select b.bill_id, b.bill_date, b.due_date, b.paid_amount, b.pending_amount,
-            bi.quantity, bi.rate, bi.type, bi.measure_data, c.cust_id, c.name, c.address, c.mobile
+            bi.quantity, bi.rate, bi.var_type, bi.measure_data, c.cust_id, c.name, c.address, c.mobile
             from billing b inner join billing_items bi on b.bill_id = bi.bill_id
             inner join customer c on c.cust_id = b.cust_id
             where bi.bill_id = :billId
@@ -57,7 +57,7 @@ public class BillingDao {
                         new ArrayList<>());
                 dtoMap.put(resBillId, billDetailDto);
             }
-            BillingItemDto itemDto = new BillingItemDto(rs.getString("type"),
+            BillingItemDto itemDto = new BillingItemDto(rs.getString("var_type"),
                     rs.getInt("quantity"), rs.getDouble("rate"),
                     rs.getString("measure_data"));
             billDetailDto.getBillingItems().add(itemDto);
