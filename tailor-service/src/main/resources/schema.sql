@@ -46,7 +46,7 @@ drop table if exists billing_items cascade;
 create table billing_items (
     id bigserial primary key,
     bill_id varchar(255) references billing(bill_id),
-    type varchar(255) references varieties(type),
+    var_type varchar(255),
     quantity int,
     rate numeric,
     measure_data json

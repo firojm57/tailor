@@ -1,1 +1,41 @@
-<p>variety works!</p>
+<div class="p-2">
+  <!-- Form for adding a new variety
+    Keeping this commented
+  <form id="add-variety-form" class="mb-6 flex">
+    <input type="text" id="variety-name" name="varietyName"
+      class="px-4 py-2 border rounded-l focus:outline-none focus:ring focus:border-blue-300 flex-grow" required>
+  -->
+  <div class="flex justify-end pr-2 pb-2">
+    <button class="px-4 py-2 btn-primary">
+      <i class="mr-2 fas fa-plus"></i> Add </button>
+  </div>
+
+  <!-- Grid layout for existing varieties -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let item of varieties"
+      class="rounded border hover:shadow-lg transition duration-150">
+      <div class="h-full" [ngClass]="item.action == 'delete' ? 'bg-red-50 opa': 'bg-white'">
+        <div class="py-3 px-4 flex justify-between items-center">
+          <span class="text-lg">{{item.type}}</span>
+          <div *ngIf="item.action != 'view'" class="flex gap-x-2 text-base">
+            <button (click)="onCancelClick(item)" class="px-2 py-1 rounded bg-blue-100"><i class="text-primary fa-solid fa-xmark"></i></button>
+            <button (click)="onConfirmClick(item)" class="px-2 py-1 rounded bg-red-100"><i class="text-danger text-opacity-75 fa-solid fa-check"></i></button>
+          </div>
+          <div *ngIf="item.action == 'view'" class="flex gap-x-2 text-base">
+            <button (click)="onEditClick(item)" class="p-2"><i class="text-primary fas fa-pen"></i></button>
+            <button (click)="onDeleteClick(item)" class="p-2"><i class="text-danger text-opacity-75 fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="px-4 pb-4">
+          <!-- Variety details -->
+          <app-tag-input
+            (tagsChange)="onTagsChange($event, item)"
+            [mode]="item.action"
+            [tags]="item.measureList">
+          </app-tag-input>
+        </div>
+      </div>
+    </div>
+    <!-- Add more variety cards as needed -->
+  </div>
+</div>

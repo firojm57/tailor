@@ -1,0 +1,16 @@
+<input *ngIf="mode == 'edit'" [(ngModel)]="tagInput"
+  (keydown.enter)="addTag()" class="p-2 border border-gray-300 rounded w-full mb-2"
+  placeholder="Type and hit Enter" />
+
+<div class="flex flex-wrap items-center">
+  <div *ngFor="let tag of tags"
+    class="rounded-lg px-2 py-1 m-1 flex items-center border hover:border-primary hover:bg-violet-50">
+    {{ tag }}
+    <span *ngIf="mode == 'edit'" (click)="removeTag(tag)"
+      class="ml-1 pl-1 hover:text-danger cursor-pointer"
+      aria-hidden="true">
+      <i class="text-base fa-regular fa-circle-xmark"></i>
+      <!-- <i class=" fa-solid fa-xmark"></i> -->
+    </span>
+  </div>
+</div>
