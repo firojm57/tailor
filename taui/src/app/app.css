@@ -1,0 +1,86 @@
+/* Root layout styling rules & design system */
+
+:root {
+  --primary-color: #082068;
+  --primary-hover: #061850;
+  --primary-light: rgba(8, 32, 104, 0.06);
+  --accent-color: #3b82f6; /* Modern Blue accent */
+  --accent-hover: #2563eb;
+  --success-color: #10b981;
+  --success-light: rgba(16, 185, 129, 0.08);
+  --danger-color: #f43f5e;
+  --danger-light: rgba(244, 63, 94, 0.08);
+  --warning-color: #f59e0b;
+  --warning-light: rgba(245, 158, 11, 0.08);
+  --border-color: #f1f5f9;
+  --border-dark: #e2e8f0;
+  --bg-app: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 20px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
+  --transition-normal: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+/* Base Form Reset Styles for consistent UI */
+input, select, textarea {
+  font-family: inherit;
+}
+
+/* Custom Scrollbar for modern feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3); /* Slate 400 */
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Viewport Constraint Classes for Desktop Single Window Layout */
+@media (min-width: 1024px) {
+  .viewport-container {
+    height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .viewport-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .scrollable-content {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+/* Global Utility Print Rules to override layout */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
