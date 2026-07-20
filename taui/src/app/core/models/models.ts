@@ -9,6 +9,7 @@ export interface CustomerMeasurement {
   customerName: string;
   mobileNumber: string;
   date: string; // YYYY-MM-DD
+  deliveryDate?: string; // Expected Delivery Date
   clothingTypeId: string;
   clothingTypeName: string;
   values: Record<string, string>; // e.g. { "Length": "40", "Chest": "38" }
@@ -29,6 +30,7 @@ export interface Bill {
   customerName: string;
   mobileNumber: string;
   date: string; // YYYY-MM-DD
+  dueDate?: string; // Expected Delivery Date (YYYY-MM-DD)
   items: BillItem[];
   totalAmount: number;
   discount: number;

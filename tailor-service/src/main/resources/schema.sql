@@ -1,53 +1,62 @@
-drop schema tailor_schema cascade;
-create schema tailor_schema;
-set search_path to tailor_schema;
+drop table if exists billing_items;
+drop table if exists billing;
+drop table if exists measurements;
+drop table if exists customer;
+drop table if exists varieties;
+drop table if exists users;
 
-drop table if exists users cascade;
 create table users (
-    id bigserial primary key,
-    username varchar(50) not null unique,
-    email varchar(255),
-    password_hash varchar(255) not null,
-    created_at timestamptz default now()
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT,
+    password_hash TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
--- static data
--- measure_list will save the keys of measurement json
--- type is like shirt, pant etc
-drop table if exists varieties cascade;
 create table varieties (
-    id bigserial primary key,
-    type varchar(255) not null unique,
-    measure_list text[]
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL UNIQUE,
+    measure_list TEXT NOT NULL
 );
 
-drop table if exists customer cascade;
 create table customer (
-    cust_id bigserial primary key,
-    name varchar(255) not null,
-    address varchar(1024),
-    mobile varchar(50) not null
+    cust_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    address TEXT,
+    mobile TEXT NOT NULL
 );
 
-drop table if exists billing cascade;
+create table measurements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_name TEXT NOT NULL,
+    mobile_number TEXT NOT NULL,
+    measurement_date TEXT NOT NULL,
+    delivery_date TEXT,
+    clothing_type_id INTEGER,
+    clothing_type_name TEXT NOT NULL,
+    measurement_values TEXT NOT NULL
+);
+
 create table billing (
-    id bigserial primary key,
-    bill_id varchar(255) unique not null,
-    cust_id bigint references customer(cust_id),
-    bill_date date,
-    due_date date,
-    paid_amount numeric,
-    pending_amount numeric
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bill_number TEXT UNIQUE NOT NULL,
+    customer_name TEXT NOT NULL,
+    mobile_number TEXT NOT NULL,
+    bill_date TEXT NOT NULL,
+    due_date TEXT,
+    total_amount REAL DEFAULT 0.0,
+    discount REAL DEFAULT 0.0,
+    grand_total REAL DEFAULT 0.0,
+    paid INTEGER DEFAULT 0,
+    notes TEXT
 );
 
--- this table contains multiple quantity and rate for one bill
--- measure_data will have keys from variety(measure_list) and values from user (ui)
-drop table if exists billing_items cascade;
 create table billing_items (
-    id bigserial primary key,
-    bill_id varchar(255) references billing(bill_id),
-    var_type varchar(255),
-    quantity int,
-    rate numeric,
-    measure_data json
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bill_id INTEGER REFERENCES billing(id) ON DELETE CASCADE,
+    clothing_type_id INTEGER,
+    clothing_type_name TEXT NOT NULL,
+    quantity INTEGER DEFAULT 1,
+    price REAL DEFAULT 0.0,
+    description TEXT
 );

@@ -2,21 +2,22 @@ server:
   port: 8080
   servlet:
     context-path: /api
+
 spring:
   sql:
     init:
       mode: always
   datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: ${SQLITE_DB_URL:jdbc:sqlite:tailor.db}
     hikari:
       connectionTimeout: 30000
       maximumPoolSize: 5
-    username: postgres
-    password: Firoj@123
-    url: jdbc:postgresql://localhost:5432/frj-saas
   jpa:
     defer-datasource-initialization: true
     hibernate:
       ddl-auto: none
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.community.dialect.SQLiteDialect

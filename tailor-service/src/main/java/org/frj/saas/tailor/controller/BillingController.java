@@ -1,44 +1,54 @@
 package org.frj.saas.tailor.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.frj.saas.tailor.model.bill.BillDetailModel;
-import org.frj.saas.tailor.model.bill.BillingModel;
+import org.frj.saas.tailor.dto.bill.BillDto;
 import org.frj.saas.tailor.service.BillingService;
-import org.frj.saas.tailor.util.Constants;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(originPatterns = "*")
+@CrossOrigin(origins = "*")
 @RestController
+@RequestMapping("/billing")
 public class BillingController {
 
-    @Autowired
-    private BillingService service;
+    private final BillingService billingService;
 
-    @GetMapping(Constants.BILLING_ENDPOINT)
-    public ResponseEntity<?> getAllBills() {
-        List<BillingModel> bills = service.getAllBills();
-        return ResponseEntity.ok(bills);
+    public BillingController(BillingService billingService) {
+        this.billingService = billingService;
     }
 
-    @GetMapping(Constants.BILLING_BILLID_ENDPOINT)
-    public ResponseEntity<?> getBillById(@PathVariable String billId) {
-        BillDetailModel billDetail;
-        try {
-            billDetail = service.getBillDetailById(billId);
-        } catch (JsonProcessingException ex) {
-            return ResponseEntity.internalServerError().build();
-        }
-        if (billDetail == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        return ResponseEntity.ok(billDetail);
+    @GetMapping
+    public ResponseEntity<List<BillDto>> getAllBills() {
+        return ResponseEntity.ok(billingService.getAllBills());
+    }
+
+    @PostMapping
+    public ResponseEntity<BillDto> createBill(@RequestBody BillDto bill) {
+        BillDto saved = billingService.saveBill(bill);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BillDto> updateBill(@PathVariable Long id, @RequestBody BillDto bill) {
+        bill.setId(id);
+        BillDto updated = billingService.saveBill(bill);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PatchMapping("/{id}/paid")
+    public ResponseEntity<BillDto> togglePaidStatus(@PathVariable Long id) {
+        return billingService.getById(id).map(bill -> {
+            bill.setPaid(!Boolean.TRUE.equals(bill.getPaid()));
+            BillDto updated = billingService.saveBill(bill);
+            return ResponseEntity.ok(updated);
+        }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBill(@PathVariable Long id) {
+        billingService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

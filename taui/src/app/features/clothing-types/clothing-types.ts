@@ -1,13 +1,14 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StorageService } from '../../core/services/storage.service';
 import { ClothingType } from '../../core/models/models';
+import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-clothing-types',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmModalComponent],
   templateUrl: './clothing-types.html',
   styleUrl: './clothing-types.css'
 })
@@ -16,15 +17,33 @@ export class ClothingTypesComponent {
 
   readonly clothingTypes = this.storageService.clothingTypes;
 
+  // Search filter
+  readonly searchTerm = signal<string>('');
+
   // UI state signals
   readonly selectedType = signal<ClothingType | null>(null);
   readonly isEditing = signal<boolean>(false);
   readonly isCreating = signal<boolean>(false);
 
+  readonly filteredTypes = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return this.clothingTypes();
+    return this.clothingTypes().filter(t => t.name.toLowerCase().includes(term));
+  });
+
   // Form fields
   typeName = '';
   fields: string[] = [];
   newFieldText = '';
+
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    if (this.deleteTarget()) {
+      this.cancelDelete();
+    } else if (this.isCreating() || this.isEditing()) {
+      this.cancel();
+    }
+  }
 
   selectType(type: ClothingType): void {
     this.selectedType.set(type);
@@ -117,9 +136,21 @@ export class ClothingTypesComponent {
     }
   }
 
-  deleteType(type: ClothingType): void {
-    if (confirm(`Are you sure you want to delete "${type.name}"? This will not delete existing measurements, but you won't be able to select it for new ones.`)) {
-      this.storageService.deleteClothingType(type.id);
+  readonly deleteTarget = signal<ClothingType | null>(null);
+
+  confirmDelete(type: ClothingType): void {
+    this.deleteTarget.set(type);
+  }
+
+  cancelDelete(): void {
+    this.deleteTarget.set(null);
+  }
+
+  executeDelete(): void {
+    const target = this.deleteTarget();
+    if (target) {
+      this.storageService.deleteClothingType(target.id);
+      this.deleteTarget.set(null);
       this.selectedType.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);

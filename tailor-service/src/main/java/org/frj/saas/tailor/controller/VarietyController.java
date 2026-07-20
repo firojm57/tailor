@@ -1,60 +1,45 @@
 package org.frj.saas.tailor.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.frj.saas.tailor.model.VarietyModel;
+import org.frj.saas.tailor.dto.VarietyDto;
 import org.frj.saas.tailor.service.VarietyService;
-import org.frj.saas.tailor.util.Constants;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 
-@CrossOrigin(originPatterns = "*")
+@CrossOrigin(origins = "*")
 @RestController
+@RequestMapping("/varieties")
 public class VarietyController {
 
-    @Autowired
-    private VarietyService varietyService;
+    private final VarietyService varietyService;
 
-    @GetMapping(Constants.VARIETIES_ENDPOINT)
-    public ResponseEntity<?> getAllVarieties() {
-        List<VarietyModel> varieties = varietyService.getAllVarieties();
-        if (varieties == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(varieties);
+    public VarietyController(VarietyService varietyService) {
+        this.varietyService = varietyService;
     }
 
-    @PostMapping(Constants.VARIETIES_ENDPOINT)
-    public ResponseEntity<?> saveVariety(@RequestBody VarietyModel variety, HttpServletRequest request) {
-        boolean success = varietyService.saveVariety(variety);
-        if (!success) {
-            return ResponseEntity.internalServerError().build();
-        }
-        return ResponseEntity.created(URI.create(request.getRequestURI() + "/" + variety.getType())).build();
+    @GetMapping
+    public ResponseEntity<List<VarietyDto>> getAllVarieties() {
+        return ResponseEntity.ok(varietyService.getAllVarieties());
     }
 
-    @PutMapping(Constants.VARIETIES_ENDPOINT)
-    public ResponseEntity<?> updateType(@RequestBody VarietyModel variety) {
-        if (variety.getId() == 0) {
-            return ResponseEntity.badRequest().build();
-        }
-        boolean success = varietyService.updateVariety(variety);
-        if (!success) {
-            return ResponseEntity.internalServerError().build();
-        }
-        return ResponseEntity.accepted().build();
+    @PostMapping
+    public ResponseEntity<VarietyDto> saveVariety(@RequestBody VarietyDto variety) {
+        VarietyDto saved = varietyService.saveVariety(variety);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @DeleteMapping(Constants.VARIETIES_TYPE_ENDPOINT)
-    public ResponseEntity<?> deleteVariety(@PathVariable Long id) {
-        boolean success = varietyService.deleteById(id);
-        if (!success) {
-            return ResponseEntity.internalServerError().build();
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<VarietyDto> updateVariety(@PathVariable Long id, @RequestBody VarietyDto variety) {
+        variety.setId(id);
+        VarietyDto updated = varietyService.saveVariety(variety);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteVariety(@PathVariable Long id) {
+        varietyService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-
 }
