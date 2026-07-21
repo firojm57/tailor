@@ -5,6 +5,8 @@ import { StorageService } from '../../core/services/storage.service';
 import { Bill, BillItem } from '../../core/models/models';
 import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 
+import { Router } from '@angular/router';
+
 @Component({
   selector: 'app-billing',
   standalone: true,
@@ -14,6 +16,7 @@ import { ConfirmModalComponent } from '../../shared/components/confirm-modal/con
 })
 export class BillingComponent {
   private readonly storageService = inject(StorageService);
+  private readonly router = inject(Router);
 
   readonly bills = this.storageService.bills;
   readonly clothingTypes = this.storageService.clothingTypes;
@@ -82,31 +85,7 @@ export class BillingComponent {
   }
 
   startCreate(): void {
-    this.isCreating.set(true);
-    this.isEditing.set(false);
-    this.selectedBill.set(null);
-
-    this.formCustomerName = '';
-    this.formMobileNumber = '';
-    const today = new Date().toISOString().split('T')[0];
-    this.formDate = today;
-
-    // Default expected delivery date to 7 days from today
-    const delivery = new Date();
-    delivery.setDate(delivery.getDate() + 7);
-    this.formDueDate = delivery.toISOString().split('T')[0];
-
-    this.formDiscount.set(0);
-    this.formPaid = true;
-    this.formNotes = '';
-    this.formItems.set([]);
-
-    // Clear temp item
-    const types = this.clothingTypes();
-    this.tempClothingTypeId = types.length > 0 ? types[0].id : '';
-    this.tempDescription = '';
-    this.tempQuantity = 1;
-    this.tempPrice = 0;
+    this.router.navigate(['/billing/create']);
   }
 
   onMobileNumberChange(): void {
