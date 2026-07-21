@@ -1,5 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ClothingType, CustomerMeasurement, Bill, DashboardStats } from '../models/models';
 
 @Injectable({
@@ -47,6 +49,29 @@ export class StorageService {
 
   constructor() {
     this.refreshData();
+  }
+
+  searchCustomerSuggestions(query: string): Observable<{ mobile: string; name: string }[]> {
+    if (!query || !query.trim()) return of([]);
+    const q = query.trim().toLowerCase();
+
+    return this.http.get<any[]>(`${this.apiUrl}/customers/search?query=${encodeURIComponent(q)}`).pipe(
+      map(data => data.map(item => ({ mobile: item.mobile, name: item.name }))),
+      catchError(() => {
+        const mapRes = new Map<string, string>();
+        for (const m of this.measurementsSignal()) {
+          if (m.mobileNumber.toLowerCase().includes(q) || m.customerName.toLowerCase().includes(q)) {
+            mapRes.set(m.mobileNumber, m.customerName);
+          }
+        }
+        for (const b of this.billsSignal()) {
+          if (b.mobileNumber.toLowerCase().includes(q) || b.customerName.toLowerCase().includes(q)) {
+            if (!mapRes.has(b.mobileNumber)) mapRes.set(b.mobileNumber, b.customerName);
+          }
+        }
+        return of(Array.from(mapRes.entries()).map(([mobile, name]) => ({ mobile, name })));
+      })
+    );
   }
 
   refreshData(): void {

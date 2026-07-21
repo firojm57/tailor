@@ -1,15 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { BillingComponent } from './billing';
-import { StorageService } from '../../core/services/storage.service';
-
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { routes } from '../../app.routes';
+import { CreateInvoiceComponent } from './create-invoice';
+import { StorageService } from '../../../core/services/storage.service';
+import { routes } from '../../../app.routes';
 
-describe('BillingComponent', () => {
+describe('CreateInvoiceComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [BillingComponent],
+      imports: [CreateInvoiceComponent],
       providers: [
         StorageService,
         provideHttpClient(),
@@ -18,8 +17,8 @@ describe('BillingComponent', () => {
     }).compileComponents();
   });
 
-  it('should create the billing component', () => {
-    const fixture = TestBed.createComponent(BillingComponent);
+  it('should create the create invoice component', () => {
+    const fixture = TestBed.createComponent(CreateInvoiceComponent);
     const component = fixture.componentInstance;
     expect(component).toBeTruthy();
   });

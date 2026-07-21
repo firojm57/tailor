@@ -18,6 +18,7 @@ export class App {
 
   readonly isSidebarOpen = signal<boolean>(false);
   readonly isProfileDropdownOpen = signal<boolean>(false);
+  readonly isBillingSubmenuOpen = signal<boolean>(true);
 
   readonly pageTitle = signal<string>('Dashboard');
 
@@ -34,7 +35,9 @@ export class App {
   }
 
   private updateTitle(url: string): void {
-    if (url.includes('/measurements')) {
+    if (url.includes('/billing/create')) {
+      this.pageTitle.set('Create New Invoice');
+    } else if (url.includes('/measurements')) {
       this.pageTitle.set('Customer Measurements');
     } else if (url.includes('/clothing-types')) {
       this.pageTitle.set('Clothing Types');
@@ -47,6 +50,10 @@ export class App {
 
   toggleSidebar(): void {
     this.isSidebarOpen.update(v => !v);
+  }
+
+  toggleBillingSubmenu(): void {
+    this.isBillingSubmenuOpen.update(v => !v);
   }
 
   toggleProfileDropdown(): void {
