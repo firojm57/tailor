@@ -1,11 +1,11 @@
-<div class="min-h-screen bg-gray-50 flex flex-col md:flex-row relative antialiased">
-  <!-- Sidebar (Sidebar is hidden in print) -->
+<div class="h-screen w-screen flex flex-col md:flex-row overflow-hidden bg-slate-50 antialiased">
+  <!-- Sidebar (hidden in print) -->
   <aside 
-    class="w-64 bg-[#082068] text-white flex-shrink-0 flex flex-col z-20 transition-all duration-300 md:translate-x-0 no-print"
+    class="w-64 bg-[#082068] text-white flex-shrink-0 flex flex-col z-20 transition-all duration-300 md:translate-x-0 no-print h-full"
     [ngClass]="isSidebarOpen() ? 'fixed inset-y-0 left-0 translate-x-0' : 'fixed md:relative -translate-x-full md:translate-x-0'"
   >
     <!-- Brand / Logo -->
-    <div class="h-16 flex items-center justify-between px-6 border-b border-[#ffffff10]">
+    <div class="h-16 flex items-center justify-between px-6 border-b border-[#ffffff10] shrink-0">
       <div class="flex items-center space-x-2.5">
         <i class='bx bxs-scissors text-[#3b82f6] text-xl'></i>
         <span class="font-extrabold text-base tracking-wider text-white">ROYAL TAILOR</span>
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Navigation Links -->
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-h-0">
       <a 
         routerLink="/dashboard" 
         routerLinkActive="bg-[#1e3478] text-white shadow-xs" 
@@ -61,12 +61,12 @@
     </nav>
 
     <!-- Sidebar footer -->
-    <div class="p-4 border-t border-[#ffffff10] text-[10px] text-indigo-200 text-center uppercase tracking-wider font-semibold">
+    <div class="p-4 border-t border-[#ffffff10] shrink-0 text-[10px] text-indigo-200 text-center uppercase tracking-wider font-semibold">
       &copy; 2026 Royal Tailors
     </div>
   </aside>
 
-  <!-- Mobile Sidebar Overlay (overlay is hidden in print) -->
+  <!-- Mobile Sidebar Overlay (hidden in print) -->
   @if (isSidebarOpen()) {
     <div 
       (click)="toggleSidebar()" 
@@ -74,75 +74,79 @@
     ></div>
   }
 
-  <!-- Main Content Wrapper -->
-  <div class="flex-1 flex flex-col min-w-0">
+  <!-- Main Content Area Wrapper -->
+  <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
     <!-- Top Nav Bar (hidden in print) -->
-    <header class="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 z-10 no-print gap-4">
-      <div class="flex items-center flex-1 max-w-md md:max-w-lg">
+    <header class="h-16 shrink-0 bg-white border-b border-slate-100 flex items-center justify-between px-6 z-10 no-print gap-4">
+      <div class="flex items-center space-x-3">
         <!-- Mobile Sidebar Toggle -->
         <button 
           (click)="toggleSidebar()" 
-          class="md:hidden text-slate-500 hover:text-slate-800 focus:outline-none p-1 mr-3 flex items-center justify-center"
+          class="md:hidden text-slate-500 hover:text-slate-800 focus:outline-none p-1 flex items-center justify-center"
         >
           <i class='bx bx-menu text-2xl'></i>
         </button>
         
-        <!-- Global Header Search Input -->
-        <div class="relative w-full">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <i class='bx bx-search text-lg'></i>
-          </div>
-          <input 
-            type="text" 
-            [ngModel]="globalSearchQuery()"
-            (ngModelChange)="globalSearchQuery.set($event)"
-            placeholder="Search by customer, phone number, invoice..." 
-            class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs md:text-sm text-slate-700 placeholder-slate-400 focus:bg-white focus:border-[#082068] focus:ring-2 focus:ring-[#082068]/10 outline-none transition-all"
-          />
-        </div>
+        <!-- Header Active Menu Name -->
+        <h2 class="text-base md:text-lg font-extrabold text-[#082068] tracking-tight">
+          {{ pageTitle() }}
+        </h2>
       </div>
 
       <!-- Right profile section -->
-      <div class="relative">
-        <button 
-          (click)="toggleProfileDropdown()" 
-          class="flex items-center space-x-2 focus:outline-none group"
-        >
-          <div class="w-9 h-9 rounded-full bg-[#082068] text-white flex items-center justify-center font-bold text-sm shadow-xs border border-indigo-200 group-hover:border-indigo-400">
-            {{ tailorName.substring(0,2).toUpperCase() }}
-          </div>
-          <div class="hidden sm:block text-left">
-            <span class="block text-xs font-semibold text-slate-700">{{ tailorName }}</span>
-            <span class="block text-[10px] text-slate-400 font-medium">{{ tailorRole }}</span>
-          </div>
-          <i class='bx bx-chevron-down text-slate-400 group-hover:text-slate-600 transition-transform duration-200 text-lg' [ngClass]="isProfileDropdownOpen() ? 'rotate-180' : ''"></i>
-        </button>
-
-        <!-- Dropdown menu -->
-        @if (isProfileDropdownOpen()) {
-          <div 
-            (click)="isProfileDropdownOpen.set(false)" 
-            class="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-lg shadow-lg py-1 z-30 transition-all"
+      <div class="flex items-center space-x-3">
+        <div class="relative">
+          <button 
+            (click)="toggleProfileDropdown()" 
+            class="flex items-center space-x-2 focus:outline-none group"
           >
-            <div class="px-4 py-2 border-b border-slate-100">
-              <span class="block text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Logged in as</span>
-              <span class="block text-xs font-semibold text-slate-700 truncate">ahmed&#64;royaltailor.com</span>
+            <div class="w-9 h-9 rounded-full bg-[#082068] text-white flex items-center justify-center font-bold text-sm shadow-xs border border-indigo-200 group-hover:border-indigo-400">
+              {{ tailorName.substring(0,2).toUpperCase() }}
             </div>
-            <button class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center transition-colors">
-              <i class='bx bx-user-circle mr-2 text-base text-slate-400'></i>
-              Profile Settings
-            </button>
-            <button (click)="isProfileDropdownOpen.set(false)" class="w-full text-left px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center font-semibold transition-colors">
-              <i class='bx bx-log-out mr-2 text-base text-rose-400'></i>
-              Log Out
-            </button>
-          </div>
-        }
+            <div class="hidden sm:block text-left">
+              <span class="block text-xs font-semibold text-slate-700">{{ tailorName }}</span>
+              <span class="block text-[10px] text-slate-400 font-medium">{{ tailorRole }}</span>
+            </div>
+            <i class='bx bx-chevron-down text-slate-400 group-hover:text-slate-600 transition-transform duration-200 text-lg' [ngClass]="isProfileDropdownOpen() ? 'rotate-180' : ''"></i>
+          </button>
+
+          <!-- Dropdown menu -->
+          @if (isProfileDropdownOpen()) {
+            <div 
+              (click)="isProfileDropdownOpen.set(false)" 
+              class="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-lg shadow-lg py-1 z-30 transition-all"
+            >
+              <div class="px-4 py-2 border-b border-slate-100">
+                <span class="block text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Logged in as</span>
+                <span class="block text-xs font-semibold text-slate-700 truncate">ahmed&#64;royaltailor.com</span>
+              </div>
+              <button class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center transition-colors">
+                <i class='bx bx-user-circle mr-2 text-base text-slate-400'></i>
+                Profile Settings
+              </button>
+              <button (click)="isProfileDropdownOpen.set(false)" class="w-full text-left px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center font-semibold transition-colors">
+                <i class='bx bx-log-out mr-2 text-base text-rose-400'></i>
+                Log Out
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </header>
 
-    <!-- Route Content Area -->
-    <main class="flex-1 overflow-hidden bg-slate-50/50">
+    <!-- Floating Toast Notification Banner -->
+    @if (storageService.toastMessage(); as toast) {
+      <div 
+        class="fixed top-4 right-6 z-50 flex items-center space-x-3 px-4 py-3 rounded-lg shadow-xl border text-xs md:text-sm font-semibold transition-all duration-300 animate-slide-in"
+        [ngClass]="toast.type === 'danger' ? 'bg-rose-900 text-white border-rose-700' : 'bg-slate-900 text-white border-slate-700'"
+      >
+        <i class='bx text-lg' [ngClass]="toast.type === 'danger' ? 'bx-error-alt text-rose-400' : 'bx-check-circle text-emerald-400'"></i>
+        <span>{{ toast.text }}</span>
+      </div>
+    }
+
+    <!-- Scrollable Route Content Area -->
+    <main class="flex-1 overflow-y-auto bg-slate-50/50 min-h-0">
       <router-outlet></router-outlet>
     </main>
   </div>

@@ -1,13 +1,14 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+import { Component, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StorageService } from '../../core/services/storage.service';
 import { CustomerMeasurement, ClothingType } from '../../core/models/models';
+import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-measurements',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmModalComponent],
   templateUrl: './measurements.html',
   styleUrl: './measurements.css'
 })
@@ -30,15 +31,23 @@ export class MeasurementsComponent {
   formCustomerName = '';
   formMobileNumber = '';
   formDate = '';
+  formDeliveryDate = '';
   readonly formClothingTypeId = signal<string>('');
   formValues: Record<string, string> = {};
+
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    if (this.deleteTarget()) {
+      this.cancelDelete();
+    } else if (this.isCreating() || this.isEditing() || this.selectedMeasurement()) {
+      this.cancel();
+    }
+  }
 
   // Computed filtered list
   readonly filteredMeasurements = computed(() => {
     const list = this.measurements();
-    const localSearch = this.searchTerm().trim().toLowerCase();
-    const globalSearch = this.storageService.globalSearchQuery().trim().toLowerCase();
-    const search = localSearch || globalSearch;
+    const search = this.searchTerm().trim().toLowerCase();
     const typeId = this.typeFilter();
 
     return list.filter(m => {
@@ -71,8 +80,14 @@ export class MeasurementsComponent {
 
     this.formCustomerName = '';
     this.formMobileNumber = '';
-    this.formDate = new Date().toISOString().split('T')[0];
-    
+    const today = new Date().toISOString().split('T')[0];
+    this.formDate = today;
+
+    // Default expected delivery date to 7 days from today
+    const delivery = new Date();
+    delivery.setDate(delivery.getDate() + 7);
+    this.formDeliveryDate = delivery.toISOString().split('T')[0];
+
     // Default to first type if available
     const types = this.clothingTypes();
     const defaultTypeId = types.length > 0 ? types[0].id : '';
@@ -93,6 +108,7 @@ export class MeasurementsComponent {
     this.formCustomerName = m.customerName;
     this.formMobileNumber = m.mobileNumber;
     this.formDate = m.date;
+    this.formDeliveryDate = m.deliveryDate || '';
     this.formClothingTypeId.set(m.clothingTypeId);
     this.formValues = { ...m.values };
   }
@@ -145,10 +161,11 @@ export class MeasurementsComponent {
     const name = this.formCustomerName.trim();
     const mobile = this.formMobileNumber.trim();
     const date = this.formDate;
+    const deliveryDate = this.formDeliveryDate;
     const typeId = this.formClothingTypeId();
 
     if (!name || !mobile || !date || !typeId) {
-      alert('Please fill out all fields.');
+      alert('Please fill out all required fields.');
       return;
     }
 
@@ -159,6 +176,7 @@ export class MeasurementsComponent {
       customerName: name,
       mobileNumber: mobile,
       date,
+      deliveryDate: deliveryDate || undefined,
       clothingTypeId: typeId,
       clothingTypeName: selectedType.name,
       values: this.formValues
@@ -185,9 +203,21 @@ export class MeasurementsComponent {
     this.isEditing.set(false);
   }
 
-  deleteMeasurement(m: CustomerMeasurement): void {
-    if (confirm(`Are you sure you want to delete measurement for "${m.customerName}" taken on ${m.date}?`)) {
-      this.storageService.deleteMeasurement(m.id);
+  readonly deleteTarget = signal<CustomerMeasurement | null>(null);
+
+  confirmDelete(m: CustomerMeasurement): void {
+    this.deleteTarget.set(m);
+  }
+
+  cancelDelete(): void {
+    this.deleteTarget.set(null);
+  }
+
+  executeDelete(): void {
+    const target = this.deleteTarget();
+    if (target) {
+      this.storageService.deleteMeasurement(target.id);
+      this.deleteTarget.set(null);
       this.selectedMeasurement.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);

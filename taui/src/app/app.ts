@@ -1,8 +1,9 @@
 import { Component, signal, inject } from '@angular/core';
-import { RouterOutlet, RouterModule } from '@angular/router';
+import { RouterOutlet, RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StorageService } from './core/services/storage.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -12,15 +13,37 @@ import { StorageService } from './core/services/storage.service';
   styleUrl: './app.css'
 })
 export class App {
-  private readonly storageService = inject(StorageService);
+  readonly storageService = inject(StorageService);
+  private readonly router = inject(Router);
 
   readonly isSidebarOpen = signal<boolean>(false);
   readonly isProfileDropdownOpen = signal<boolean>(false);
 
-  readonly globalSearchQuery = this.storageService.globalSearchQuery;
+  readonly pageTitle = signal<string>('Dashboard');
 
   readonly tailorName = 'Ahmed Khan';
   readonly tailorRole = 'Master Tailor';
+
+  constructor() {
+    this.updateTitle(this.router.url);
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd)
+    ).subscribe((e: any) => {
+      this.updateTitle(e.urlAfterRedirects || e.url);
+    });
+  }
+
+  private updateTitle(url: string): void {
+    if (url.includes('/measurements')) {
+      this.pageTitle.set('Customer Measurements');
+    } else if (url.includes('/clothing-types')) {
+      this.pageTitle.set('Clothing Types');
+    } else if (url.includes('/billing')) {
+      this.pageTitle.set('Billing & Invoices');
+    } else {
+      this.pageTitle.set('Dashboard');
+    }
+  }
 
   toggleSidebar(): void {
     this.isSidebarOpen.update(v => !v);

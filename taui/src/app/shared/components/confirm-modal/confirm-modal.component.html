@@ -1,0 +1,23 @@
+@if (isOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 no-print">
+    <div (click)="onCancel()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
+    <div class="relative w-full max-w-sm bg-white rounded-xl shadow-2xl border border-slate-200 p-6 z-10 text-center space-y-4">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto"
+           [ngClass]="isDanger ? 'bg-rose-100 text-rose-600' : 'bg-indigo-100 text-indigo-600'">
+        <i class='bx text-2xl' [ngClass]="isDanger ? 'bx-error-alt' : 'bx-help-circle'"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900">{{ title }}</h3>
+        <p class="text-xs text-slate-500 mt-1">{{ message }}</p>
+      </div>
+      <div class="flex justify-center space-x-3 pt-2">
+        <button (click)="onCancel()" class="btn-light text-xs py-2 px-4">{{ cancelText }}</button>
+        <button (click)="onConfirm()"
+                class="px-4 py-2 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+                [ngClass]="isDanger ? 'bg-rose-600 hover:bg-rose-700' : 'bg-[#082068] hover:bg-[#061850]'">
+          {{ confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

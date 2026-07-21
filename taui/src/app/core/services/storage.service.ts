@@ -1,15 +1,26 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { ClothingType, CustomerMeasurement, Bill, DashboardStats } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StorageService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = 'http://localhost:8080/api';
+
   // Signals representing the state
   private readonly clothingTypesSignal = signal<ClothingType[]>([]);
   private readonly measurementsSignal = signal<CustomerMeasurement[]>([]);
   private readonly billsSignal = signal<Bill[]>([]);
-  readonly globalSearchQuery = signal<string>('');
+  readonly toastMessage = signal<{ text: string; type: 'success' | 'danger' | 'info' } | null>(null);
+
+  showToast(text: string, type: 'success' | 'danger' | 'info' = 'success'): void {
+    this.toastMessage.set({ text, type });
+    setTimeout(() => {
+      this.toastMessage.set(null);
+    }, 3500);
+  }
 
   // Public readonly views of the signals
   readonly clothingTypes = this.clothingTypesSignal.asReadonly();
@@ -24,7 +35,7 @@ export class StorageService {
     ]);
     const totalEarnings = this.billsSignal()
       .filter(b => b.paid)
-      .reduce((sum, b) => sum + b.grandTotal, 0);
+      .reduce((sum, b) => sum + (b.grandTotal || 0), 0);
 
     return {
       totalCustomers: uniqueMobiles.size,
@@ -35,181 +46,243 @@ export class StorageService {
   });
 
   constructor() {
-    this.initData();
+    this.refreshData();
   }
 
-  private initData(): void {
-    // 1. Load clothing types
-    let types = localStorage.getItem('tailor_clothing_types');
-    if (!types) {
-      const defaultTypes: ClothingType[] = [
-        {
-          id: 'type-shirt',
-          name: 'Shirt',
-          fields: ['Length', 'Chest', 'Sleeve Length', 'Collar', 'Shoulder', 'Cuff']
-        },
-        {
-          id: 'type-pant',
-          name: 'Pant',
-          fields: ['Length', 'Waist', 'Hip', 'Inseam', 'Thigh', 'Bottom Width']
-        },
-        {
-          id: 'type-tshirt',
-          name: 'T-Shirt',
-          fields: ['Length', 'Chest', 'Shoulder', 'Sleeve Length']
-        }
-      ];
-      localStorage.setItem('tailor_clothing_types', JSON.stringify(defaultTypes));
-      types = JSON.stringify(defaultTypes);
-    }
-    this.clothingTypesSignal.set(JSON.parse(types));
+  refreshData(): void {
+    // 1. Fetch varieties / clothing types
+    this.http.get<any[]>(`${this.apiUrl}/varieties`).subscribe({
+      next: (data) => {
+        const types: ClothingType[] = data.map(item => ({
+          id: String(item.id),
+          name: item.type,
+          fields: item.measureList || []
+        }));
+        this.clothingTypesSignal.set(types);
+        localStorage.setItem('tailor_clothing_types', JSON.stringify(types));
+      },
+      error: () => this.loadLocalTypes()
+    });
 
-    // 2. Load measurements
-    let meas = localStorage.getItem('tailor_measurements');
-    if (!meas) {
-      const today = new Date().toISOString().split('T')[0];
-      const defaultMeas: CustomerMeasurement[] = [
-        {
-          id: 'm-1',
-          customerName: 'John Doe',
-          mobileNumber: '9876543210',
-          date: today,
-          clothingTypeId: 'type-shirt',
-          clothingTypeName: 'Shirt',
-          values: {
-            'Length': '30',
-            'Chest': '40',
-            'Sleeve Length': '24',
-            'Collar': '15.5',
-            'Shoulder': '18',
-            'Cuff': '9.5'
-          }
-        },
-        {
-          id: 'm-2',
-          customerName: 'Alex Smith',
-          mobileNumber: '9988776655',
-          date: today,
-          clothingTypeId: 'type-pant',
-          clothingTypeName: 'Pant',
-          values: {
-            'Length': '41',
-            'Waist': '34',
-            'Hip': '40',
-            'Inseam': '31',
-            'Thigh': '22',
-            'Bottom Width': '16'
-          }
-        }
-      ];
-      localStorage.setItem('tailor_measurements', JSON.stringify(defaultMeas));
-      meas = JSON.stringify(defaultMeas);
-    }
-    this.measurementsSignal.set(JSON.parse(meas));
+    // 2. Fetch measurements
+    this.http.get<any[]>(`${this.apiUrl}/measurements`).subscribe({
+      next: (data) => {
+        const meas: CustomerMeasurement[] = data.map(item => ({
+          id: String(item.id),
+          customerName: item.customerName,
+          mobileNumber: item.mobileNumber,
+          date: item.date,
+          clothingTypeId: String(item.clothingTypeId || ''),
+          clothingTypeName: item.clothingTypeName,
+          values: item.values || {}
+        }));
+        this.measurementsSignal.set(meas);
+        localStorage.setItem('tailor_measurements', JSON.stringify(meas));
+      },
+      error: () => this.loadLocalMeasurements()
+    });
 
-    // 3. Load bills
-    let billsStr = localStorage.getItem('tailor_bills');
-    if (!billsStr) {
-      const today = new Date().toISOString().split('T')[0];
-      const defaultBills: Bill[] = [
-        {
-          id: 'b-1',
-          billNumber: 'B-1001',
-          customerName: 'John Doe',
-          mobileNumber: '9876543210',
-          date: today,
-          items: [
-            {
-              id: 'bi-1',
-              clothingTypeId: 'type-shirt',
-              clothingTypeName: 'Shirt',
-              quantity: 2,
-              price: 350,
-              description: 'Cotton shirt sewing service'
-            }
-          ],
-          totalAmount: 700,
-          discount: 50,
-          grandTotal: 650,
-          paid: true,
-          notes: 'Standard stitching'
-        }
-      ];
-      localStorage.setItem('tailor_bills', JSON.stringify(defaultBills));
-      billsStr = JSON.stringify(defaultBills);
-    }
-    this.billsSignal.set(JSON.parse(billsStr));
+    // 3. Fetch bills
+    this.http.get<any[]>(`${this.apiUrl}/billing`).subscribe({
+      next: (data) => {
+        const bills: Bill[] = data.map(item => ({
+          id: String(item.id),
+          billNumber: item.billNumber,
+          customerName: item.customerName,
+          mobileNumber: item.mobileNumber,
+          date: item.date,
+          totalAmount: item.totalAmount || 0,
+          discount: item.discount || 0,
+          grandTotal: item.grandTotal || 0,
+          paid: Boolean(item.paid),
+          notes: item.notes || '',
+          items: (item.items || []).map((it: any) => ({
+            id: String(it.id),
+            clothingTypeId: String(it.clothingTypeId || ''),
+            clothingTypeName: it.clothingTypeName,
+            quantity: it.quantity || 1,
+            price: it.price || 0,
+            description: it.description || ''
+          }))
+        }));
+        this.billsSignal.set(bills);
+        localStorage.setItem('tailor_bills', JSON.stringify(bills));
+      },
+      error: () => this.loadLocalBills()
+    });
+  }
+
+  // Fallback to local storage if API is offline
+  private loadLocalTypes(): void {
+    const types = localStorage.getItem('tailor_clothing_types');
+    if (types) this.clothingTypesSignal.set(JSON.parse(types));
+  }
+
+  private loadLocalMeasurements(): void {
+    const meas = localStorage.getItem('tailor_measurements');
+    if (meas) this.measurementsSignal.set(JSON.parse(meas));
+  }
+
+  private loadLocalBills(): void {
+    const bills = localStorage.getItem('tailor_bills');
+    if (bills) this.billsSignal.set(JSON.parse(bills));
   }
 
   // --- Clothing Type CRUD ---
-  saveClothingTypes(types: ClothingType[]): void {
-    localStorage.setItem('tailor_clothing_types', JSON.stringify(types));
-    this.clothingTypesSignal.set(types);
-  }
-
   addClothingType(name: string, fields: string[]): ClothingType {
-    const newType: ClothingType = {
-      id: 'type-' + Date.now(),
-      name,
-      fields
-    };
-    const current = this.clothingTypesSignal();
-    this.saveClothingTypes([...current, newType]);
+    const payload = { type: name, measureList: fields };
+    const tempId = 'type-' + Date.now();
+    const newType: ClothingType = { id: tempId, name, fields };
+
+    this.http.post<any>(`${this.apiUrl}/varieties`, payload).subscribe({
+      next: (res) => {
+        if (res && res.id) newType.id = String(res.id);
+        this.showToast(`Category "${name}" created successfully!`);
+        this.refreshData();
+      },
+      error: () => {
+        const updated = [...this.clothingTypesSignal(), newType];
+        this.clothingTypesSignal.set(updated);
+        localStorage.setItem('tailor_clothing_types', JSON.stringify(updated));
+        this.showToast(`Category "${name}" created locally!`);
+      }
+    });
+
     return newType;
   }
 
   updateClothingType(id: string, name: string, fields: string[]): void {
-    const updated = this.clothingTypesSignal().map(t => 
-      t.id === id ? { ...t, name, fields } : t
-    );
-    this.saveClothingTypes(updated);
+    const numericId = Number(id);
+    const payload = { id: numericId, type: name, measureList: fields };
 
-    // Update denormalized type names in measurements
-    const currentMeas = this.measurementsSignal();
-    let changed = false;
-    const updatedMeas = currentMeas.map(m => {
-      if (m.clothingTypeId === id && m.clothingTypeName !== name) {
-        changed = true;
-        return { ...m, clothingTypeName: name };
-      }
-      return m;
-    });
-    if (changed) {
-      this.saveMeasurements(updatedMeas);
+    if (!isNaN(numericId)) {
+      this.http.put(`${this.apiUrl}/varieties/${numericId}`, payload).subscribe({
+        next: () => {
+          this.showToast(`Category "${name}" updated successfully!`);
+          this.refreshData();
+        },
+        error: () => this.updateLocalClothingType(id, name, fields)
+      });
+    } else {
+      this.updateLocalClothingType(id, name, fields);
     }
   }
 
+  private updateLocalClothingType(id: string, name: string, fields: string[]): void {
+    const updated = this.clothingTypesSignal().map(t =>
+      t.id === id ? { ...t, name, fields } : t
+    );
+    this.clothingTypesSignal.set(updated);
+    localStorage.setItem('tailor_clothing_types', JSON.stringify(updated));
+    this.showToast(`Category "${name}" updated locally!`);
+  }
+
   deleteClothingType(id: string): void {
+    const numericId = Number(id);
+    if (!isNaN(numericId)) {
+      this.http.delete(`${this.apiUrl}/varieties/${numericId}`).subscribe({
+        next: () => {
+          this.showToast('Category deleted successfully!', 'danger');
+          this.refreshData();
+        },
+        error: () => this.deleteLocalClothingType(id)
+      });
+    } else {
+      this.deleteLocalClothingType(id);
+    }
+  }
+
+  private deleteLocalClothingType(id: string): void {
     const filtered = this.clothingTypesSignal().filter(t => t.id !== id);
-    this.saveClothingTypes(filtered);
+    this.clothingTypesSignal.set(filtered);
+    localStorage.setItem('tailor_clothing_types', JSON.stringify(filtered));
+    this.showToast('Category deleted locally!', 'danger');
   }
 
   // --- Customer Measurement CRUD ---
-  saveMeasurements(meas: CustomerMeasurement[]): void {
-    localStorage.setItem('tailor_measurements', JSON.stringify(meas));
-    this.measurementsSignal.set(meas);
-  }
-
   addMeasurement(measurement: Omit<CustomerMeasurement, 'id'>): CustomerMeasurement {
-    const newMeas: CustomerMeasurement = {
-      ...measurement,
-      id: 'm-' + Date.now()
+    const payload = {
+      customerName: measurement.customerName,
+      mobileNumber: measurement.mobileNumber,
+      date: measurement.date,
+      deliveryDate: measurement.deliveryDate,
+      clothingTypeId: Number(measurement.clothingTypeId) || null,
+      clothingTypeName: measurement.clothingTypeName,
+      values: measurement.values
     };
-    const current = this.measurementsSignal();
-    this.saveMeasurements([newMeas, ...current]);
+    const newMeas: CustomerMeasurement = { ...measurement, id: 'm-' + Date.now() };
+
+    this.http.post<any>(`${this.apiUrl}/measurements`, payload).subscribe({
+      next: () => {
+        this.showToast(`Measurement for "${measurement.customerName}" recorded!`);
+        this.refreshData();
+      },
+      error: () => {
+        const updated = [newMeas, ...this.measurementsSignal()];
+        this.measurementsSignal.set(updated);
+        localStorage.setItem('tailor_measurements', JSON.stringify(updated));
+        this.showToast(`Measurement for "${measurement.customerName}" saved locally!`);
+      }
+    });
+
     return newMeas;
   }
 
   updateMeasurement(id: string, measurement: Omit<CustomerMeasurement, 'id'>): void {
+    const numericId = Number(id);
+    const payload = {
+      id: numericId,
+      customerName: measurement.customerName,
+      mobileNumber: measurement.mobileNumber,
+      date: measurement.date,
+      deliveryDate: measurement.deliveryDate,
+      clothingTypeId: Number(measurement.clothingTypeId) || null,
+      clothingTypeName: measurement.clothingTypeName,
+      values: measurement.values
+    };
+
+    if (!isNaN(numericId)) {
+      this.http.put(`${this.apiUrl}/measurements/${numericId}`, payload).subscribe({
+        next: () => {
+          this.showToast(`Measurement for "${measurement.customerName}" updated!`);
+          this.refreshData();
+        },
+        error: () => this.updateLocalMeasurement(id, measurement)
+      });
+    } else {
+      this.updateLocalMeasurement(id, measurement);
+    }
+  }
+
+  private updateLocalMeasurement(id: string, measurement: Omit<CustomerMeasurement, 'id'>): void {
     const updated = this.measurementsSignal().map(m =>
       m.id === id ? { ...m, ...measurement } : m
     );
-    this.saveMeasurements(updated);
+    this.measurementsSignal.set(updated);
+    localStorage.setItem('tailor_measurements', JSON.stringify(updated));
+    this.showToast(`Measurement for "${measurement.customerName}" updated locally!`);
   }
 
   deleteMeasurement(id: string): void {
+    const numericId = Number(id);
+    if (!isNaN(numericId)) {
+      this.http.delete(`${this.apiUrl}/measurements/${numericId}`).subscribe({
+        next: () => {
+          this.showToast('Measurement deleted successfully!', 'danger');
+          this.refreshData();
+        },
+        error: () => this.deleteLocalMeasurement(id)
+      });
+    } else {
+      this.deleteLocalMeasurement(id);
+    }
+  }
+
+  private deleteLocalMeasurement(id: string): void {
     const filtered = this.measurementsSignal().filter(m => m.id !== id);
-    this.saveMeasurements(filtered);
+    this.measurementsSignal.set(filtered);
+    localStorage.setItem('tailor_measurements', JSON.stringify(filtered));
+    this.showToast('Measurement deleted locally!', 'danger');
   }
 
   getMeasurementsByMobile(mobile: string): CustomerMeasurement[] {
@@ -217,32 +290,116 @@ export class StorageService {
   }
 
   // --- Bill CRUD ---
-  saveBills(bills: Bill[]): void {
-    localStorage.setItem('tailor_bills', JSON.stringify(bills));
-    this.billsSignal.set(bills);
-  }
-
   addBill(bill: Omit<Bill, 'id' | 'billNumber'>): Bill {
     const count = this.billsSignal().length + 1001;
+    const generatedBillNumber = 'INV-' + count;
+    const payload = {
+      billNumber: generatedBillNumber,
+      customerName: bill.customerName,
+      mobileNumber: bill.mobileNumber,
+      date: bill.date,
+      dueDate: bill.dueDate,
+      totalAmount: bill.totalAmount,
+      discount: bill.discount,
+      grandTotal: bill.grandTotal,
+      paid: bill.paid,
+      notes: bill.notes,
+      items: bill.items.map(it => ({
+        clothingTypeId: Number(it.clothingTypeId) || null,
+        clothingTypeName: it.clothingTypeName,
+        quantity: it.quantity,
+        price: it.price,
+        description: it.description
+      }))
+    };
+
     const newBill: Bill = {
       ...bill,
       id: 'b-' + Date.now(),
-      billNumber: 'B-' + count
+      billNumber: generatedBillNumber
     };
-    const current = this.billsSignal();
-    this.saveBills([newBill, ...current]);
+
+    this.http.post<any>(`${this.apiUrl}/billing`, payload).subscribe({
+      next: () => {
+        this.showToast(`Invoice ${generatedBillNumber} created!`);
+        this.refreshData();
+      },
+      error: () => {
+        const updated = [newBill, ...this.billsSignal()];
+        this.billsSignal.set(updated);
+        localStorage.setItem('tailor_bills', JSON.stringify(updated));
+        this.showToast(`Invoice ${generatedBillNumber} created locally!`);
+      }
+    });
+
     return newBill;
   }
 
   updateBill(id: string, bill: Omit<Bill, 'id' | 'billNumber'>): void {
+    const numericId = Number(id);
+    const existing = this.billsSignal().find(b => b.id === id);
+    const payload = {
+      id: numericId,
+      billNumber: existing?.billNumber || 'INV-1001',
+      customerName: bill.customerName,
+      mobileNumber: bill.mobileNumber,
+      date: bill.date,
+      dueDate: bill.dueDate,
+      totalAmount: bill.totalAmount,
+      discount: bill.discount,
+      grandTotal: bill.grandTotal,
+      paid: bill.paid,
+      notes: bill.notes,
+      items: bill.items.map(it => ({
+        clothingTypeId: Number(it.clothingTypeId) || null,
+        clothingTypeName: it.clothingTypeName,
+        quantity: it.quantity,
+        price: it.price,
+        description: it.description
+      }))
+    };
+
+    if (!isNaN(numericId)) {
+      this.http.put(`${this.apiUrl}/billing/${numericId}`, payload).subscribe({
+        next: () => {
+          this.showToast(`Invoice ${payload.billNumber} updated!`);
+          this.refreshData();
+        },
+        error: () => this.updateLocalBill(id, bill)
+      });
+    } else {
+      this.updateLocalBill(id, bill);
+    }
+  }
+
+  private updateLocalBill(id: string, bill: Omit<Bill, 'id' | 'billNumber'>): void {
     const updated = this.billsSignal().map(b =>
       b.id === id ? { ...b, ...bill } : b
     );
-    this.saveBills(updated);
+    this.billsSignal.set(updated);
+    localStorage.setItem('tailor_bills', JSON.stringify(updated));
+    this.showToast('Invoice updated locally!');
   }
 
   deleteBill(id: string): void {
+    const numericId = Number(id);
+    if (!isNaN(numericId)) {
+      this.http.delete(`${this.apiUrl}/billing/${numericId}`).subscribe({
+        next: () => {
+          this.showToast('Invoice deleted successfully!', 'danger');
+          this.refreshData();
+        },
+        error: () => this.deleteLocalBill(id)
+      });
+    } else {
+      this.deleteLocalBill(id);
+    }
+  }
+
+  private deleteLocalBill(id: string): void {
     const filtered = this.billsSignal().filter(b => b.id !== id);
-    this.saveBills(filtered);
+    this.billsSignal.set(filtered);
+    localStorage.setItem('tailor_bills', JSON.stringify(filtered));
+    this.showToast('Invoice deleted locally!', 'danger');
   }
 }
