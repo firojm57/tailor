@@ -91,11 +91,6 @@ export class MeasurementsComponent {
         this.totalElements.set(res.totalElements);
         this.totalPages.set(res.totalPages);
         this.isLastPage.set(res.last);
-
-        // Auto-select first element if nothing selected and not in form state
-        if (res.content.length > 0 && !this.selectedMeasurement() && !this.isCreating() && !this.isEditing()) {
-          this.selectedMeasurement.set(res.content[0]);
-        }
       }
     });
   }

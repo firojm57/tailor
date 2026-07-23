@@ -90,9 +90,10 @@ export class StorageService {
     });
 
     // 2. Fetch measurements
-    this.http.get<any[]>(`${this.apiUrl}/measurements`).subscribe({
-      next: (data) => {
-        const meas: CustomerMeasurement[] = data.map(item => ({
+    this.http.get<any>(`${this.apiUrl}/measurements?page=0&size=1000`).subscribe({
+      next: (res) => {
+        const list = Array.isArray(res) ? res : (res?.content || []);
+        const meas: CustomerMeasurement[] = list.map((item: any) => ({
           id: String(item.id),
           customerName: item.customerName,
           mobileNumber: item.mobileNumber,
@@ -108,9 +109,10 @@ export class StorageService {
     });
 
     // 3. Fetch bills
-    this.http.get<any[]>(`${this.apiUrl}/billing`).subscribe({
-      next: (data) => {
-        const bills: Bill[] = data.map(item => ({
+    this.http.get<any>(`${this.apiUrl}/billing?page=0&size=1000`).subscribe({
+      next: (res) => {
+        const list = Array.isArray(res) ? res : (res?.content || []);
+        const bills: Bill[] = list.map((item: any) => ({
           id: String(item.id),
           billNumber: item.billNumber,
           customerName: item.customerName,

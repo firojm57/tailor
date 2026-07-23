@@ -5,12 +5,12 @@ import { StorageService } from '../../core/services/storage.service';
 import { Bill, BillItem } from '../../core/models/models';
 import { ConfirmModalComponent } from '../../shared/components/confirm-modal/confirm-modal.component';
 
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-billing',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmModalComponent],
+  imports: [CommonModule, FormsModule, ConfirmModalComponent, RouterModule],
   templateUrl: './billing.html',
   styleUrl: './billing.css'
 })
@@ -103,11 +103,6 @@ export class BillingComponent {
         this.totalElements.set(res.totalElements);
         this.totalPages.set(res.totalPages);
         this.isLastPage.set(res.last);
-
-        // Auto-select first bill if nothing selected and not in form state
-        if (res.content.length > 0 && !this.selectedBill() && !this.isCreating() && !this.isEditing()) {
-          this.selectedBill.set(res.content[0]);
-        }
       }
     });
   }
