@@ -1,12 +1,13 @@
 package org.frj.saas.tailor.controller;
 
+import org.frj.saas.tailor.dto.PagedResponse;
 import org.frj.saas.tailor.dto.bill.BillDto;
 import org.frj.saas.tailor.service.BillingService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -20,8 +21,21 @@ public class BillingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BillDto>> getAllBills() {
-        return ResponseEntity.ok(billingService.getAllBills());
+    public ResponseEntity<PagedResponse<BillDto>> getBills(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "search", defaultValue = "") String search
+    ) {
+        Page<BillDto> result = billingService.getFilteredBills(search, PageRequest.of(page, size));
+        PagedResponse<BillDto> response = new PagedResponse<>(
+                result.getContent(),
+                result.getNumber(),
+                result.getSize(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.isLast()
+        );
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

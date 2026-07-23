@@ -9,7 +9,7 @@
       <input 
         type="text" 
         [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
+        (input)="onSearchInput($any($event.target).value)"
         placeholder="Search invoice #, customer, mobile..." 
         class="form-input form-input-search w-full pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 shadow-xs focus:border-[#082068]"
       />
@@ -27,7 +27,7 @@
       <div class="flex items-center space-x-2">
         <h3 class="font-semibold text-xs text-slate-800 uppercase tracking-wider">Invoice Registry</h3>
         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/80 text-slate-700">
-          {{ filteredBills().length }}
+          {{ totalElements() }}
         </span>
       </div>
     </div>
@@ -47,7 +47,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-sm">
-          @for (bill of filteredBills(); track bill.id) {
+          @for (bill of pagedBills(); track bill.id) {
             <tr 
               (click)="selectBill(bill)"
               class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
@@ -107,6 +107,32 @@
           }
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between shrink-0 text-xs">
+      <div class="text-slate-500">
+        Showing <span class="font-semibold text-slate-800">{{ totalElements() === 0 ? 0 : page() * size() + 1 }}</span> to 
+        <span class="font-semibold text-slate-800">{{ Math.min((page() + 1) * size(), totalElements()) }}</span> of 
+        <span class="font-semibold text-slate-800">{{ totalElements() }}</span> records
+      </div>
+      <div class="flex items-center space-x-2">
+        <button 
+          (click)="prevPage()" 
+          [disabled]="page() === 0"
+          class="inline-flex items-center px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 transition-colors"
+        >
+          <i class='bx bx-chevron-left text-sm mr-0.5'></i> Prev
+        </button>
+        <span class="text-slate-500 font-medium">Page {{ page() + 1 }} of {{ totalPages() || 1 }}</span>
+        <button 
+          (click)="nextPage()" 
+          [disabled]="isLastPage()"
+          class="inline-flex items-center px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 transition-colors"
+        >
+          Next <i class='bx bx-chevron-right text-sm ml-0.5'></i>
+        </button>
+      </div>
     </div>
   </div>
 </div>

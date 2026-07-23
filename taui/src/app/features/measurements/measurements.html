@@ -9,7 +9,7 @@
       <input 
         type="text" 
         [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
+        (input)="onSearchInput($any($event.target).value)"
         placeholder="Search customer, mobile..." 
         class="form-input form-input-search w-full pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 shadow-xs focus:border-[#082068]"
       />
@@ -19,7 +19,7 @@
     <div class="flex items-center space-x-3">
       <select 
         [ngModel]="typeFilter()" 
-        (ngModelChange)="typeFilter.set($event)"
+        (ngModelChange)="onTypeFilterChange($event)"
         class="form-select text-sm py-2 px-3.5 bg-white border border-slate-300 rounded-lg text-slate-800 font-medium"
       >
         <option value="">All Categories</option>
@@ -39,7 +39,7 @@
       <div class="flex items-center space-x-2">
         <h3 class="font-semibold text-xs text-slate-800 uppercase tracking-wider">Measurements Registry</h3>
         <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/80 text-slate-700">
-          {{ filteredMeasurements().length }}
+          {{ totalElements() }}
         </span>
       </div>
     </div>
@@ -56,7 +56,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-sm">
-          @for (m of filteredMeasurements(); track m.id) {
+          @for (m of pagedMeasurements(); track m.id) {
             <tr 
               (click)="selectMeasurement(m)"
               class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
@@ -111,7 +111,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="py-12 text-center text-slate-400 text-sm">
+              <td colspan="5" class="py-12 text-center text-slate-400 text-sm">
                 <i class='bx bx-ruler text-4xl text-slate-300 mb-2 block'></i>
                 No measurement records found matching your criteria.
               </td>
@@ -119,6 +119,32 @@
           }
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between shrink-0 text-xs">
+      <div class="text-slate-500">
+        Showing <span class="font-semibold text-slate-800">{{ totalElements() === 0 ? 0 : page() * size() + 1 }}</span> to 
+        <span class="font-semibold text-slate-800">{{ Math.min((page() + 1) * size(), totalElements()) }}</span> of 
+        <span class="font-semibold text-slate-800">{{ totalElements() }}</span> records
+      </div>
+      <div class="flex items-center space-x-2">
+        <button 
+          (click)="prevPage()" 
+          [disabled]="page() === 0"
+          class="inline-flex items-center px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 transition-colors"
+        >
+          <i class='bx bx-chevron-left text-sm mr-0.5'></i> Prev
+        </button>
+        <span class="text-slate-500 font-medium">Page {{ page() + 1 }} of {{ totalPages() || 1 }}</span>
+        <button 
+          (click)="nextPage()" 
+          [disabled]="isLastPage()"
+          class="inline-flex items-center px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 transition-colors"
+        >
+          Next <i class='bx bx-chevron-right text-sm ml-0.5'></i>
+        </button>
+      </div>
     </div>
   </div>
 </div>

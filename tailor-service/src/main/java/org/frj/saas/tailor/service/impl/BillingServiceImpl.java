@@ -3,6 +3,8 @@ package org.frj.saas.tailor.service.impl;
 import org.frj.saas.tailor.dao.BillDao;
 import org.frj.saas.tailor.dto.bill.BillDto;
 import org.frj.saas.tailor.service.BillingService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +22,12 @@ public class BillingServiceImpl implements BillingService {
     @Override
     public List<BillDto> getAllBills() {
         return billDao.findAllByOrderByIdDesc();
+    }
+
+    @Override
+    public Page<BillDto> getFilteredBills(String search, Pageable pageable) {
+        String searchTerm = search == null ? "" : search.trim();
+        return billDao.findFiltered(searchTerm, pageable);
     }
 
     @Override

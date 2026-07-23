@@ -3,6 +3,8 @@ package org.frj.saas.tailor.service.impl;
 import org.frj.saas.tailor.dao.MeasurementDao;
 import org.frj.saas.tailor.dto.MeasurementDto;
 import org.frj.saas.tailor.service.MeasurementService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +22,13 @@ public class MeasurementServiceImpl implements MeasurementService {
     @Override
     public List<MeasurementDto> getAllMeasurements() {
         return measurementDao.findAllByOrderByIdDesc();
+    }
+
+    @Override
+    public Page<MeasurementDto> getFilteredMeasurements(String search, Long clothingTypeId, Pageable pageable) {
+        String searchTerm = search == null ? "" : search.trim();
+        Long typeId = clothingTypeId == null ? 0L : clothingTypeId;
+        return measurementDao.findFiltered(searchTerm, typeId, pageable);
     }
 
     @Override

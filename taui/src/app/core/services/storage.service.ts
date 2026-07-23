@@ -427,4 +427,111 @@ export class StorageService {
     localStorage.setItem('tailor_bills', JSON.stringify(filtered));
     this.showToast('Invoice deleted locally!', 'danger');
   }
+
+  getMeasurementsPage(page: number, size: number, search: string, clothingTypeId: string): Observable<PagedResult<CustomerMeasurement>> {
+    const typeId = clothingTypeId ? Number(clothingTypeId) : 0;
+    const url = `${this.apiUrl}/measurements?page=${page}&size=${size}&search=${encodeURIComponent(search)}&clothingTypeId=${typeId}`;
+    return this.http.get<any>(url).pipe(
+      map(res => {
+        const content: CustomerMeasurement[] = (res.content || []).map((item: any) => ({
+          id: String(item.id),
+          customerName: item.customerName,
+          mobileNumber: item.mobileNumber,
+          date: item.date,
+          clothingTypeId: String(item.clothingTypeId || ''),
+          clothingTypeName: item.clothingTypeName,
+          values: item.values || {}
+        }));
+        return {
+          content,
+          pageNumber: res.pageNumber,
+          pageSize: res.pageSize,
+          totalElements: res.totalElements,
+          totalPages: res.totalPages,
+          last: res.last
+        };
+      }),
+      catchError(() => {
+        const all = this.measurementsSignal();
+        const filtered = all.filter(m => {
+          const matchSearch = !search || m.customerName.toLowerCase().includes(search.toLowerCase()) || m.mobileNumber.includes(search);
+          const matchType = !clothingTypeId || m.clothingTypeId === clothingTypeId;
+          return matchSearch && matchType;
+        });
+        const start = page * size;
+        const pageItems = filtered.slice(start, start + size);
+        return of({
+          content: pageItems,
+          pageNumber: page,
+          pageSize: size,
+          totalElements: filtered.length,
+          totalPages: Math.ceil(filtered.length / size),
+          last: start + size >= filtered.length
+        });
+      })
+    );
+  }
+
+  getBillsPage(page: number, size: number, search: string): Observable<PagedResult<Bill>> {
+    const url = `${this.apiUrl}/billing?page=${page}&size=${size}&search=${encodeURIComponent(search)}`;
+    return this.http.get<any>(url).pipe(
+      map(res => {
+        const content: Bill[] = (res.content || []).map((item: any) => ({
+          id: String(item.id),
+          billNumber: item.billNumber,
+          customerName: item.customerName,
+          mobileNumber: item.mobileNumber,
+          date: item.date,
+          totalAmount: item.totalAmount || 0,
+          discount: item.discount || 0,
+          grandTotal: item.grandTotal || 0,
+          paid: Boolean(item.paid),
+          notes: item.notes || '',
+          items: (item.items || []).map((it: any) => ({
+            id: String(it.id),
+            clothingTypeId: String(it.clothingTypeId || ''),
+            clothingTypeName: it.clothingTypeName,
+            quantity: it.quantity || 1,
+            price: it.price || 0,
+            description: it.description || ''
+          }))
+        }));
+        return {
+          content,
+          pageNumber: res.pageNumber,
+          pageSize: res.pageSize,
+          totalElements: res.totalElements,
+          totalPages: res.totalPages,
+          last: res.last
+        };
+      }),
+      catchError(() => {
+        const all = this.billsSignal();
+        const filtered = all.filter(b => {
+          return !search || b.billNumber.toLowerCase().includes(search.toLowerCase()) ||
+                 b.customerName.toLowerCase().includes(search.toLowerCase()) ||
+                 b.mobileNumber.includes(search);
+        });
+        const start = page * size;
+        const pageItems = filtered.slice(start, start + size);
+        return of({
+          content: pageItems,
+          pageNumber: page,
+          pageSize: size,
+          totalElements: filtered.length,
+          totalPages: Math.ceil(filtered.length / size),
+          last: start + size >= filtered.length
+        });
+      })
+    );
+  }
+}
+
+export interface PagedResult<T> {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
 }

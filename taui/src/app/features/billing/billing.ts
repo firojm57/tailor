@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StorageService } from '../../core/services/storage.service';
@@ -20,6 +20,14 @@ export class BillingComponent {
 
   readonly bills = this.storageService.bills;
   readonly clothingTypes = this.storageService.clothingTypes;
+
+  // Pagination Signals
+  readonly page = signal<number>(0);
+  readonly size = signal<number>(10);
+  readonly totalElements = signal<number>(0);
+  readonly totalPages = signal<number>(0);
+  readonly isLastPage = signal<boolean>(true);
+  readonly pagedBills = signal<Bill[]>([]);
 
   // Search & Filter
   readonly searchTerm = signal<string>('');
@@ -45,6 +53,9 @@ export class BillingComponent {
   tempQuantity = 1;
   tempPrice = 0;
 
+  readonly Math = Math;
+  private searchDebounceTimer: any;
+
   @HostListener('document:keydown.escape')
   handleEscapeKey(): void {
     if (this.deleteTarget()) {
@@ -53,20 +64,6 @@ export class BillingComponent {
       this.cancel();
     }
   }
-
-  // Computed filtered bills
-  readonly filteredBills = computed(() => {
-    const list = this.bills();
-    const search = this.searchTerm().trim().toLowerCase();
-
-    if (!search) return list;
-
-    return list.filter(b =>
-      b.billNumber.toLowerCase().includes(search) ||
-      b.customerName.toLowerCase().includes(search) ||
-      b.mobileNumber.includes(search)
-    );
-  });
 
   // Computed totals for the invoice form
   readonly formTotalAmount = computed(() => {
@@ -77,6 +74,57 @@ export class BillingComponent {
     const total = this.formTotalAmount();
     return Math.max(0, total - this.formDiscount());
   });
+
+  constructor() {
+    // Reload page whenever page or search term changes
+    effect(() => {
+      this.page();
+      this.searchTerm();
+      this.loadPagedData();
+    });
+  }
+
+  loadPagedData(): void {
+    this.storageService.getBillsPage(
+      this.page(),
+      this.size(),
+      this.searchTerm()
+    ).subscribe({
+      next: (res) => {
+        this.pagedBills.set(res.content);
+        this.totalElements.set(res.totalElements);
+        this.totalPages.set(res.totalPages);
+        this.isLastPage.set(res.last);
+
+        // Auto-select first bill if nothing selected and not in form state
+        if (res.content.length > 0 && !this.selectedBill() && !this.isCreating() && !this.isEditing()) {
+          this.selectedBill.set(res.content[0]);
+        }
+      }
+    });
+  }
+
+  onSearchInput(value: string): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.page.set(0);
+      this.searchTerm.set(value);
+    }, 300);
+  }
+
+  prevPage(): void {
+    if (this.page() > 0) {
+      this.page.update(p => p - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (!this.isLastPage()) {
+      this.page.update(p => p + 1);
+    }
+  }
 
   selectBill(bill: Bill): void {
     this.selectedBill.set(bill);
@@ -91,7 +139,6 @@ export class BillingComponent {
   onMobileNumberChange(): void {
     const mobile = this.formMobileNumber.trim();
     if (mobile.length >= 10 && this.isCreating()) {
-      // Find customer name from previous records
       const latestMeas = this.storageService.measurements().find(m => m.mobileNumber === mobile);
       if (latestMeas) {
         this.formCustomerName = latestMeas.customerName;
@@ -133,10 +180,8 @@ export class BillingComponent {
       description: this.tempDescription.trim() || `${type.name} stitching service`
     };
 
-    // Add to items array
     this.formItems.update(items => [...items, newItem]);
 
-    // Reset temp item inputs
     this.tempDescription = '';
     this.tempQuantity = 1;
     this.tempPrice = 0;
@@ -176,14 +221,20 @@ export class BillingComponent {
     };
 
     if (this.isCreating()) {
-      const newBill = this.storageService.addBill(billData);
-      this.selectBill(newBill);
+      this.storageService.addBill(billData);
+      setTimeout(() => {
+        this.page.set(0);
+        this.loadPagedData();
+      }, 300);
     } else if (this.isEditing()) {
       const bill = this.selectedBill();
       if (!bill) return;
       this.storageService.updateBill(bill.id, billData);
-      const updated = this.bills().find(x => x.id === bill.id) || null;
-      this.selectedBill.set(updated);
+      setTimeout(() => {
+        this.loadPagedData();
+        const updated = this.bills().find(x => x.id === bill.id) || null;
+        this.selectedBill.set(updated);
+      }, 300);
     }
 
     this.isCreating.set(false);
@@ -214,9 +265,9 @@ export class BillingComponent {
       this.selectedBill.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);
-      if (this.bills().length > 0) {
-        this.selectedBill.set(this.bills()[0]);
-      }
+      setTimeout(() => {
+        this.loadPagedData();
+      }, 300);
     }
   }
 
@@ -229,6 +280,7 @@ export class BillingComponent {
   }
 
   formatDate(dateStr: string): string {
+    if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', {
       day: '2-digit',
