@@ -16,7 +16,8 @@ create table users (
 create table varieties (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL UNIQUE,
-    measure_list TEXT NOT NULL
+    measure_list TEXT NOT NULL,
+    style_list TEXT
 );
 
 create table customer (

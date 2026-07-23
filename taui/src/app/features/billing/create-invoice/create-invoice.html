@@ -347,12 +347,15 @@
 
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Style Type (optional)</label>
-            <input 
-              type="text" 
+            <select 
               [(ngModel)]="modalStyle" 
-              placeholder="e.g. Formal, Casual, Sports"
-              class="form-input w-full text-sm py-2 px-3.5"
-            />
+              class="form-select w-full text-sm py-2 px-3.5"
+            >
+              <option value="">-- No Style --</option>
+              @for (st of selectedType()?.styles; track st) {
+                <option [value]="st">{{ st }}</option>
+              }
+            </select>
           </div>
 
           @if (selectedType(); as type) {

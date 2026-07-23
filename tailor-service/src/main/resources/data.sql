@@ -2,13 +2,13 @@ insert into users (username, password_hash, email)
 values ('admin', 'admin@123', 'admin@example.com');
 
 -- 1. Clothing Categories
-insert into varieties (type, measure_list)
+insert into varieties (type, measure_list, style_list)
 values 
-('Shirt', '["Collar", "Shoulder", "Chest", "Waist", "Seat", "Sleeve Length", "Shirt Length"]'),
-('Pant', '["Waist", "Seat", "Thigh", "Knee", "Crotch", "Bottom", "Pant Length"]'),
-('Suit', '["Jacket Length", "Shoulder", "Chest", "Waist", "Sleeve Length", "Pant Waist", "Pant Length"]'),
-('Kurta', '["Chest", "Shoulder", "Sleeve Length", "Kurta Length", "Collar"]'),
-('Sherwani', '["Chest", "Waist", "Shoulder", "Sherwani Length", "Sleeve Length"]');
+('Shirt', '["Collar", "Shoulder", "Chest", "Waist", "Seat", "Sleeve Length", "Shirt Length"]', '["Formal", "Casual", "Sports", "Partywear"]'),
+('Pant', '["Waist", "Seat", "Thigh", "Knee", "Crotch", "Bottom", "Pant Length"]', '["Formal", "Casual", "Jeans", "Chinos"]'),
+('Suit', '["Jacket Length", "Shoulder", "Chest", "Waist", "Sleeve Length", "Pant Waist", "Pant Length"]', '["Formal", "Tuxedo", "Wedding"]'),
+('Kurta', '["Chest", "Shoulder", "Sleeve Length", "Kurta Length", "Collar"]', '["Ethnic", "Casual", "Wedding"]'),
+('Sherwani', '["Chest", "Waist", "Shoulder", "Sherwani Length", "Sleeve Length"]', '["Ethnic", "Wedding", "Designer"]');
 
 -- 2. Customers
 insert into customer (name, address, mobile)

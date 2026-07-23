@@ -2,6 +2,7 @@ export interface ClothingType {
   id: string;
   name: string;
   fields: string[]; // List of measurement fields (e.g. Length, Sleeve Length, Chest, Waist, Inseam)
+  styles: string[]; // List of styles configured for this type (e.g. Formal, Casual)
 }
 
 export interface CustomerMeasurement {

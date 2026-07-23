@@ -35,6 +35,8 @@ export class ClothingTypesComponent {
   typeName = '';
   fields: string[] = [];
   newFieldText = '';
+  styles: string[] = [];
+  newStyleText = '';
 
   @HostListener('document:keydown.escape')
   handleEscapeKey(): void {
@@ -58,6 +60,8 @@ export class ClothingTypesComponent {
     this.typeName = '';
     this.fields = ['Length']; // start with a default field
     this.newFieldText = '';
+    this.styles = ['Formal', 'Casual']; // default starting styles
+    this.newStyleText = '';
   }
 
   startEdit(): void {
@@ -69,6 +73,8 @@ export class ClothingTypesComponent {
     this.typeName = type.name;
     this.fields = [...type.fields];
     this.newFieldText = '';
+    this.styles = [...(type.styles || [])];
+    this.newStyleText = '';
   }
 
   addField(): void {
@@ -88,6 +94,21 @@ export class ClothingTypesComponent {
       return;
     }
     this.fields.splice(index, 1);
+  }
+
+  addStyle(): void {
+    const text = this.newStyleText.trim();
+    if (!text) return;
+    if (this.styles.some(s => s.toLowerCase() === text.toLowerCase())) {
+      alert('Style already exists.');
+      return;
+    }
+    this.styles.push(text);
+    this.newStyleText = '';
+  }
+
+  removeStyle(index: number): void {
+    this.styles.splice(index, 1);
   }
 
   save(): void {
@@ -112,13 +133,13 @@ export class ClothingTypesComponent {
         return;
       }
 
-      const newType = this.storageService.addClothingType(name, this.fields);
+      const newType = this.storageService.addClothingType(name, this.fields, this.styles);
       this.selectType(newType);
     } else if (this.isEditing()) {
       const type = this.selectedType();
       if (!type) return;
 
-      this.storageService.updateClothingType(type.id, name, this.fields);
+      this.storageService.updateClothingType(type.id, name, this.fields, this.styles);
       // Reload selected type
       const updated = this.clothingTypes().find(t => t.id === type.id) || null;
       this.selectedType.set(updated);

@@ -81,7 +81,8 @@ export class StorageService {
         const types: ClothingType[] = data.map(item => ({
           id: String(item.id),
           name: item.type,
-          fields: item.measureList || []
+          fields: item.measureList || [],
+          styles: item.styleList || []
         }));
         this.clothingTypesSignal.set(types);
         localStorage.setItem('tailor_clothing_types', JSON.stringify(types));
@@ -157,10 +158,10 @@ export class StorageService {
   }
 
   // --- Clothing Type CRUD ---
-  addClothingType(name: string, fields: string[]): ClothingType {
-    const payload = { type: name, measureList: fields };
+  addClothingType(name: string, fields: string[], styles: string[]): ClothingType {
+    const payload = { type: name, measureList: fields, styleList: styles };
     const tempId = 'type-' + Date.now();
-    const newType: ClothingType = { id: tempId, name, fields };
+    const newType: ClothingType = { id: tempId, name, fields, styles };
 
     this.http.post<any>(`${this.apiUrl}/varieties`, payload).subscribe({
       next: (res) => {
@@ -179,9 +180,9 @@ export class StorageService {
     return newType;
   }
 
-  updateClothingType(id: string, name: string, fields: string[]): void {
+  updateClothingType(id: string, name: string, fields: string[], styles: string[]): void {
     const numericId = Number(id);
-    const payload = { id: numericId, type: name, measureList: fields };
+    const payload = { id: numericId, type: name, measureList: fields, styleList: styles };
 
     if (!isNaN(numericId)) {
       this.http.put(`${this.apiUrl}/varieties/${numericId}`, payload).subscribe({
@@ -189,16 +190,16 @@ export class StorageService {
           this.showToast(`Category "${name}" updated successfully!`);
           this.refreshData();
         },
-        error: () => this.updateLocalClothingType(id, name, fields)
+        error: () => this.updateLocalClothingType(id, name, fields, styles)
       });
     } else {
-      this.updateLocalClothingType(id, name, fields);
+      this.updateLocalClothingType(id, name, fields, styles);
     }
   }
 
-  private updateLocalClothingType(id: string, name: string, fields: string[]): void {
+  private updateLocalClothingType(id: string, name: string, fields: string[], styles: string[]): void {
     const updated = this.clothingTypesSignal().map(t =>
-      t.id === id ? { ...t, name, fields } : t
+      t.id === id ? { ...t, name, fields, styles } : t
     );
     this.clothingTypesSignal.set(updated);
     localStorage.setItem('tailor_clothing_types', JSON.stringify(updated));
