@@ -235,21 +235,25 @@ export class MeasurementsComponent {
     };
 
     if (this.isCreating()) {
-      this.storageService.addMeasurement(measurementData);
-      // Show toast and reload list
-      setTimeout(() => {
-        this.page.set(0);
-        this.loadPagedData();
-      }, 300);
+      this.storageService.addMeasurement(measurementData).subscribe({
+        next: () => {
+          this.page.set(0);
+          this.loadPagedData();
+        }
+      });
     } else if (this.isEditing()) {
       const m = this.selectedMeasurement();
       if (!m) return;
-      this.storageService.updateMeasurement(m.id, measurementData);
-      setTimeout(() => {
-        this.loadPagedData();
-        const updated = this.measurements().find(x => x.id === m.id) || null;
-        this.selectedMeasurement.set(updated);
-      }, 300);
+      this.storageService.updateMeasurement(m.id, measurementData).subscribe({
+        next: () => {
+          this.loadPagedData();
+          // Update details drawer immediately with new fields
+          this.selectedMeasurement.set({
+            ...m,
+            ...measurementData
+          });
+        }
+      });
     }
 
     this.isCreating.set(false);
@@ -275,14 +279,15 @@ export class MeasurementsComponent {
   executeDelete(): void {
     const target = this.deleteTarget();
     if (target) {
-      this.storageService.deleteMeasurement(target.id);
+      this.storageService.deleteMeasurement(target.id).subscribe({
+        next: () => {
+          this.loadPagedData();
+        }
+      });
       this.deleteTarget.set(null);
       this.selectedMeasurement.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);
-      setTimeout(() => {
-        this.loadPagedData();
-      }, 300);
     }
   }
 

@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ClothingType, CustomerMeasurement, Bill, DashboardStats } from '../models/models';
 
 @Injectable({
@@ -228,7 +228,7 @@ export class StorageService {
   }
 
   // --- Customer Measurement CRUD ---
-  addMeasurement(measurement: Omit<CustomerMeasurement, 'id'>): CustomerMeasurement {
+  addMeasurement(measurement: Omit<CustomerMeasurement, 'id'>): Observable<CustomerMeasurement> {
     const payload = {
       customerName: measurement.customerName,
       mobileNumber: measurement.mobileNumber,
@@ -241,23 +241,32 @@ export class StorageService {
     };
     const newMeas: CustomerMeasurement = { ...measurement, id: 'm-' + Date.now() };
 
-    this.http.post<any>(`${this.apiUrl}/measurements`, payload).subscribe({
-      next: () => {
+    return this.http.post<any>(`${this.apiUrl}/measurements`, payload).pipe(
+      map(res => {
         this.showToast(`Measurement for "${measurement.customerName}" recorded!`);
         this.refreshData();
-      },
-      error: () => {
+        return {
+          id: String(res.id),
+          customerName: res.customerName,
+          mobileNumber: res.mobileNumber,
+          date: res.date,
+          clothingTypeId: String(res.clothingTypeId || ''),
+          clothingTypeName: res.clothingTypeName,
+          values: res.values || {},
+          style: res.style
+        };
+      }),
+      catchError(() => {
         const updated = [newMeas, ...this.measurementsSignal()];
         this.measurementsSignal.set(updated);
         localStorage.setItem('tailor_measurements', JSON.stringify(updated));
         this.showToast(`Measurement for "${measurement.customerName}" saved locally!`);
-      }
-    });
-
-    return newMeas;
+        return of(newMeas);
+      })
+    );
   }
 
-  updateMeasurement(id: string, measurement: Omit<CustomerMeasurement, 'id'>): void {
+  updateMeasurement(id: string, measurement: Omit<CustomerMeasurement, 'id'>): Observable<any> {
     const numericId = Number(id);
     const payload = {
       id: numericId,
@@ -272,15 +281,19 @@ export class StorageService {
     };
 
     if (!isNaN(numericId)) {
-      this.http.put(`${this.apiUrl}/measurements/${numericId}`, payload).subscribe({
-        next: () => {
+      return this.http.put(`${this.apiUrl}/measurements/${numericId}`, payload).pipe(
+        tap(() => {
           this.showToast(`Measurement for "${measurement.customerName}" updated!`);
           this.refreshData();
-        },
-        error: () => this.updateLocalMeasurement(id, measurement)
-      });
+        }),
+        catchError(() => {
+          this.updateLocalMeasurement(id, measurement);
+          return of(null);
+        })
+      );
     } else {
       this.updateLocalMeasurement(id, measurement);
+      return of(null);
     }
   }
 
@@ -293,18 +306,22 @@ export class StorageService {
     this.showToast(`Measurement for "${measurement.customerName}" updated locally!`);
   }
 
-  deleteMeasurement(id: string): void {
+  deleteMeasurement(id: string): Observable<any> {
     const numericId = Number(id);
     if (!isNaN(numericId)) {
-      this.http.delete(`${this.apiUrl}/measurements/${numericId}`).subscribe({
-        next: () => {
+      return this.http.delete(`${this.apiUrl}/measurements/${numericId}`).pipe(
+        tap(() => {
           this.showToast('Measurement deleted successfully!', 'danger');
           this.refreshData();
-        },
-        error: () => this.deleteLocalMeasurement(id)
-      });
+        }),
+        catchError(() => {
+          this.deleteLocalMeasurement(id);
+          return of(null);
+        })
+      );
     } else {
       this.deleteLocalMeasurement(id);
+      return of(null);
     }
   }
 

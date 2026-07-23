@@ -251,6 +251,10 @@ export class CreateInvoiceComponent {
         clothingTypeName: type.name,
         values: this.measValues,
         style: this.modalStyle.trim() || undefined
+      }).subscribe({
+        next: () => {
+          this.loadCustomerMeasurements(this.mobileNumber.trim());
+        }
       });
     } else {
       this.storageService.addMeasurement({
@@ -261,11 +265,14 @@ export class CreateInvoiceComponent {
         clothingTypeName: type.name,
         values: this.measValues,
         style: this.modalStyle.trim() || undefined
+      }).subscribe({
+        next: () => {
+          this.loadCustomerMeasurements(this.mobileNumber.trim());
+        }
       });
     }
 
     this.isMeasurementModalOpen.set(false);
-    this.loadCustomerMeasurements(this.mobileNumber.trim());
   }
 
   capitalize(str: string): string {
