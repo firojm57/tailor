@@ -54,6 +54,7 @@ export class CreateInvoiceComponent {
   editingMeasurementId = signal<string | null>(null);
   selectedType = signal<ClothingType | null>(null);
   measValues: Record<string, string> = {};
+  modalStyle = '';
   pickerSearchTerm = signal<string>('');
 
   readonly customerSuggestions = signal<{ mobile: string; name: string }[]>([]);
@@ -139,7 +140,7 @@ export class CreateInvoiceComponent {
           keyDimensions: dimensionsStr || 'Custom Dimensions',
           quantity: 1,
           price: 500,
-          description: `Stitching for ${m.clothingTypeName} (${dimensionsStr})`,
+          description: m.style ? `${this.capitalize(m.style)} ${this.capitalize(m.clothingTypeName)}` : this.capitalize(m.clothingTypeName),
           selected: true
         };
       });
@@ -170,6 +171,7 @@ export class CreateInvoiceComponent {
 
     if (this.clothingTypes().length > 0) {
       this.selectedType.set(this.clothingTypes()[0]);
+      this.modalStyle = '';
       this.initMeasValues(this.clothingTypes()[0]);
     }
   }
@@ -190,7 +192,7 @@ export class CreateInvoiceComponent {
       keyDimensions: dimensionsStr || 'Custom Dimensions',
       quantity: 1,
       price: 500,
-      description: `Stitching for ${meas.clothingTypeName} (${dimensionsStr})`,
+      description: meas.style ? `${this.capitalize(meas.style)} ${this.capitalize(meas.clothingTypeName)}` : this.capitalize(meas.clothingTypeName),
       selected: true
     };
 
@@ -214,6 +216,7 @@ export class CreateInvoiceComponent {
     this.activeModalTab.set('new');
     this.editingMeasurementId.set(meas.id);
     this.selectedType.set(type);
+    this.modalStyle = meas.style || '';
     this.measValues = { ...(meas.values || {}) };
   }
 
@@ -246,7 +249,8 @@ export class CreateInvoiceComponent {
         date: new Date().toISOString().split('T')[0],
         clothingTypeId: type.id,
         clothingTypeName: type.name,
-        values: this.measValues
+        values: this.measValues,
+        style: this.modalStyle.trim() || undefined
       });
     } else {
       this.storageService.addMeasurement({
@@ -255,12 +259,18 @@ export class CreateInvoiceComponent {
         date: new Date().toISOString().split('T')[0],
         clothingTypeId: type.id,
         clothingTypeName: type.name,
-        values: this.measValues
+        values: this.measValues,
+        style: this.modalStyle.trim() || undefined
       });
     }
 
     this.isMeasurementModalOpen.set(false);
     this.loadCustomerMeasurements(this.mobileNumber.trim());
+  }
+
+  capitalize(str: string): string {
+    if (!str) return '';
+    return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
   }
 
   cancelMeasurementModal(): void {

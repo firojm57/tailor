@@ -40,6 +40,7 @@ export class MeasurementsComponent {
   formMobileNumber = '';
   formDate = '';
   formDeliveryDate = '';
+  formStyle = '';
   readonly formClothingTypeId = signal<string>('');
   formValues: Record<string, string> = {};
 
@@ -135,6 +136,7 @@ export class MeasurementsComponent {
 
     this.formCustomerName = '';
     this.formMobileNumber = '';
+    this.formStyle = '';
     const today = new Date().toISOString().split('T')[0];
     this.formDate = today;
 
@@ -162,6 +164,7 @@ export class MeasurementsComponent {
     this.formMobileNumber = m.mobileNumber;
     this.formDate = m.date;
     this.formDeliveryDate = m.deliveryDate || '';
+    this.formStyle = m.style || '';
     this.formClothingTypeId.set(m.clothingTypeId);
     this.formValues = { ...m.values };
   }
@@ -227,7 +230,8 @@ export class MeasurementsComponent {
       deliveryDate: deliveryDate || undefined,
       clothingTypeId: typeId,
       clothingTypeName: selectedType.name,
-      values: this.formValues
+      values: this.formValues,
+      style: this.formStyle.trim() || undefined
     };
 
     if (this.isCreating()) {

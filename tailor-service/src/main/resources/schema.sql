@@ -34,7 +34,8 @@ create table measurements (
     delivery_date TEXT,
     clothing_type_id INTEGER,
     clothing_type_name TEXT NOT NULL,
-    measurement_values TEXT NOT NULL
+    measurement_values TEXT NOT NULL,
+    style TEXT
 );
 
 create table billing (

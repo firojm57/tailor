@@ -13,6 +13,7 @@ export interface CustomerMeasurement {
   clothingTypeId: string;
   clothingTypeName: string;
   values: Record<string, string>; // e.g. { "Length": "40", "Chest": "38" }
+  style?: string; // e.g. "Formal", "Casual", "Sports", etc.
 }
 
 export interface BillItem {

@@ -100,7 +100,8 @@ export class StorageService {
           date: item.date,
           clothingTypeId: String(item.clothingTypeId || ''),
           clothingTypeName: item.clothingTypeName,
-          values: item.values || {}
+          values: item.values || {},
+          style: item.style
         }));
         this.measurementsSignal.set(meas);
         localStorage.setItem('tailor_measurements', JSON.stringify(meas));
@@ -235,7 +236,8 @@ export class StorageService {
       deliveryDate: measurement.deliveryDate,
       clothingTypeId: Number(measurement.clothingTypeId) || null,
       clothingTypeName: measurement.clothingTypeName,
-      values: measurement.values
+      values: measurement.values,
+      style: measurement.style || null
     };
     const newMeas: CustomerMeasurement = { ...measurement, id: 'm-' + Date.now() };
 
@@ -265,7 +267,8 @@ export class StorageService {
       deliveryDate: measurement.deliveryDate,
       clothingTypeId: Number(measurement.clothingTypeId) || null,
       clothingTypeName: measurement.clothingTypeName,
-      values: measurement.values
+      values: measurement.values,
+      style: measurement.style || null
     };
 
     if (!isNaN(numericId)) {
@@ -442,7 +445,8 @@ export class StorageService {
           date: item.date,
           clothingTypeId: String(item.clothingTypeId || ''),
           clothingTypeName: item.clothingTypeName,
-          values: item.values || {}
+          values: item.values || {},
+          style: item.style
         }));
         return {
           content,

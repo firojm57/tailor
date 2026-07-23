@@ -303,7 +303,7 @@
                     <span class="font-bold text-sm text-slate-900">{{ meas.customerName }}</span>
                     <span class="text-xs text-slate-500 font-mono">({{ meas.mobileNumber }})</span>
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-800">
-                      {{ meas.clothingTypeName }}
+                      {{ meas.style ? meas.style + ' ' + meas.clothingTypeName : meas.clothingTypeName }}
                     </span>
                   </div>
                   <p class="text-xs text-slate-600 font-mono mt-1">
@@ -343,6 +343,16 @@
                 <option [value]="type.id">{{ type.name }}</option>
               }
             </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Style Type (optional)</label>
+            <input 
+              type="text" 
+              [(ngModel)]="modalStyle" 
+              placeholder="e.g. Formal, Casual, Sports"
+              class="form-input w-full text-sm py-2 px-3.5"
+            />
           </div>
 
           @if (selectedType(); as type) {

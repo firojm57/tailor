@@ -23,16 +23,16 @@ values
 ('Nitin Shinde', 'Navi Mumbai, Maharashtra', '9819055443');
 
 -- 3. Customer Measurements
-insert into measurements (customer_name, mobile_number, measurement_date, delivery_date, clothing_type_id, clothing_type_name, measurement_values)
+insert into measurements (customer_name, mobile_number, measurement_date, delivery_date, clothing_type_id, clothing_type_name, measurement_values, style)
 values
-('Rajesh Kumar', '9876543210', '2026-07-15', '2026-07-22', 1, 'Shirt', '{"Collar": "15.5", "Shoulder": "18.0", "Chest": "40.0", "Waist": "34.0", "Seat": "38.0", "Sleeve Length": "24.5", "Shirt Length": "29.0"}'),
-('Rajesh Kumar', '9876543210', '2026-07-15', '2026-07-22', 2, 'Pant', '{"Waist": "34.0", "Seat": "40.0", "Thigh": "24.0", "Knee": "17.0", "Crotch": "25.0", "Bottom": "15.5", "Pant Length": "41.0"}'),
-('Amit Shah', '9822011223', '2026-07-16', '2026-07-25', 3, 'Suit', '{"Jacket Length": "30.0", "Shoulder": "19.0", "Chest": "42.0", "Waist": "36.0", "Sleeve Length": "25.0", "Pant Waist": "36.0", "Pant Length": "42.0"}'),
-('Vikram Malhotra', '9930044556', '2026-07-17', '2026-07-23', 4, 'Kurta', '{"Chest": "38.0", "Shoulder": "17.5", "Sleeve Length": "24.0", "Kurta Length": "40.0", "Collar": "15.0"}'),
-('Sunil Verma', '9765432109', '2026-07-18', '2026-07-24', 1, 'Shirt', '{"Collar": "16.0", "Shoulder": "18.5", "Chest": "41.0", "Waist": "35.0", "Seat": "39.0", "Sleeve Length": "25.0", "Shirt Length": "30.0"}'),
-('Praveen Joshi', '9422088776', '2026-07-18', '2026-07-27', 5, 'Sherwani', '{"Chest": "44.0", "Waist": "38.0", "Shoulder": "19.5", "Sherwani Length": "44.0", "Sleeve Length": "26.0"}'),
-('Deepak Patel', '9898012345', '2026-07-19', '2026-07-26', 2, 'Pant', '{"Waist": "32.0", "Seat": "38.0", "Thigh": "23.0", "Knee": "16.0", "Crotch": "24.0", "Bottom": "15.0", "Pant Length": "40.0"}'),
-('Kedar Deshmukh', '9657011223', '2026-07-20', '2026-07-28', 1, 'Shirt', '{"Collar": "15.0", "Shoulder": "17.5", "Chest": "39.0", "Waist": "33.0", "Seat": "37.0", "Sleeve Length": "24.0", "Shirt Length": "28.5"}');
+('Rajesh Kumar', '9876543210', '2026-07-15', '2026-07-22', 1, 'Shirt', '{"Collar": "15.5", "Shoulder": "18.0", "Chest": "40.0", "Waist": "34.0", "Seat": "38.0", "Sleeve Length": "24.5", "Shirt Length": "29.0"}', 'Formal'),
+('Rajesh Kumar', '9876543210', '2026-07-15', '2026-07-22', 2, 'Pant', '{"Waist": "34.0", "Seat": "40.0", "Thigh": "24.0", "Knee": "17.0", "Crotch": "25.0", "Bottom": "15.5", "Pant Length": "41.0"}', 'Formal'),
+('Amit Shah', '9822011223', '2026-07-16', '2026-07-25', 3, 'Suit', '{"Jacket Length": "30.0", "Shoulder": "19.0", "Chest": "42.0", "Waist": "36.0", "Sleeve Length": "25.0", "Pant Waist": "36.0", "Pant Length": "42.0"}', 'Casual'),
+('Vikram Malhotra', '9930044556', '2026-07-17', '2026-07-23', 4, 'Kurta', '{"Chest": "38.0", "Shoulder": "17.5", "Sleeve Length": "24.0", "Kurta Length": "40.0", "Collar": "15.0"}', 'Ethnic'),
+('Sunil Verma', '9765432109', '2026-07-18', '2026-07-24', 1, 'Shirt', '{"Collar": "16.0", "Shoulder": "18.5", "Chest": "41.0", "Waist": "35.0", "Seat": "39.0", "Sleeve Length": "25.0", "Shirt Length": "30.0"}', 'Sports'),
+('Praveen Joshi', '9422088776', '2026-07-18', '2026-07-27', 5, 'Sherwani', '{"Chest": "44.0", "Waist": "38.0", "Shoulder": "19.5", "Sherwani Length": "44.0", "Sleeve Length": "26.0"}', 'Ethnic'),
+('Deepak Patel', '9898012345', '2026-07-19', '2026-07-26', 2, 'Pant', '{"Waist": "32.0", "Seat": "38.0", "Thigh": "23.0", "Knee": "16.0", "Crotch": "24.0", "Bottom": "15.0", "Pant Length": "40.0"}', 'Casual'),
+('Kedar Deshmukh', '9657011223', '2026-07-20', '2026-07-28', 1, 'Shirt', '{"Collar": "15.0", "Shoulder": "17.5", "Chest": "39.0", "Waist": "33.0", "Seat": "37.0", "Sleeve Length": "24.0", "Shirt Length": "28.5"}', 'Formal');
 
 -- 4. Billing & Invoices
 insert into billing (bill_number, customer_name, mobile_number, bill_date, due_date, total_amount, discount, grand_total, paid, notes)
