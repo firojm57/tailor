@@ -43,8 +43,11 @@ export class MeasurementsComponent {
   readonly formClothingTypeId = signal<string>('');
   formValues: Record<string, string> = {};
 
-  readonly Math = Math;
   private searchDebounceTimer: any;
+
+  readonly showingTo = computed(() => {
+    return Math.min((this.page() + 1) * this.size(), this.totalElements());
+  });
 
   @HostListener('document:keydown.escape')
   handleEscapeKey(): void {
@@ -79,6 +82,11 @@ export class MeasurementsComponent {
       this.typeFilter()
     ).subscribe({
       next: (res) => {
+        if (this.page() >= res.totalPages && res.totalPages > 0) {
+          this.page.set(0);
+          return;
+        }
+
         this.pagedMeasurements.set(res.content);
         this.totalElements.set(res.totalElements);
         this.totalPages.set(res.totalPages);
