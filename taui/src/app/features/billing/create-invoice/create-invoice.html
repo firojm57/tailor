@@ -1,4 +1,14 @@
-<div class="h-full flex flex-col p-6 space-y-4 box-border overflow-hidden">
+<div class="h-full flex flex-col p-6 space-y-3 box-border overflow-hidden">
+
+  <!-- Compact Top Action Bar (Minimal Padding & Margin) -->
+  <div class="flex items-center justify-between shrink-0 pb-0.5">
+    <div class="flex items-center space-x-2">
+      <span class="text-xs text-slate-400 font-medium">Drafting custom customer invoice</span>
+    </div>
+    <button (click)="saveInvoice()" class="btn-primary text-xs py-1.5 px-4 font-semibold flex items-center gap-1.5 shadow-xs">
+      <i class='bx bx-check-circle text-base'></i> Save Invoice
+    </button>
+  </div>
 
   <!-- Main 2-Column Dashboard Grid (60:40 Ratio, Fits in viewport) -->
   <div class="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6 min-h-0 overflow-hidden">
