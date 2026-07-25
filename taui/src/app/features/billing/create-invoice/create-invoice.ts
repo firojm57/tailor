@@ -317,9 +317,11 @@ export class CreateInvoiceComponent {
       paid: false,
       notes: this.notes,
       items: billItems
+    }).subscribe({
+      next: () => {
+        this.router.navigate(['/billing']);
+      }
     });
-
-    this.router.navigate(['/billing']);
   }
 
   @HostListener('document:click', ['$event'])

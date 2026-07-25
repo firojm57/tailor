@@ -158,42 +158,46 @@ export class StorageService {
   }
 
   // --- Clothing Type CRUD ---
-  addClothingType(name: string, fields: string[], styles: string[]): ClothingType {
+  addClothingType(name: string, fields: string[], styles: string[]): Observable<ClothingType> {
     const payload = { type: name, measureList: fields, styleList: styles };
     const tempId = 'type-' + Date.now();
     const newType: ClothingType = { id: tempId, name, fields, styles };
 
-    this.http.post<any>(`${this.apiUrl}/varieties`, payload).subscribe({
-      next: (res) => {
+    return this.http.post<any>(`${this.apiUrl}/varieties`, payload).pipe(
+      map((res) => {
         if (res && res.id) newType.id = String(res.id);
         this.showToast(`Category "${name}" created successfully!`);
         this.refreshData();
-      },
-      error: () => {
+        return newType;
+      }),
+      catchError(() => {
         const updated = [...this.clothingTypesSignal(), newType];
         this.clothingTypesSignal.set(updated);
         localStorage.setItem('tailor_clothing_types', JSON.stringify(updated));
         this.showToast(`Category "${name}" created locally!`);
-      }
-    });
-
-    return newType;
+        return of(newType);
+      })
+    );
   }
 
-  updateClothingType(id: string, name: string, fields: string[], styles: string[]): void {
+  updateClothingType(id: string, name: string, fields: string[], styles: string[]): Observable<any> {
     const numericId = Number(id);
     const payload = { id: numericId, type: name, measureList: fields, styleList: styles };
 
     if (!isNaN(numericId)) {
-      this.http.put(`${this.apiUrl}/varieties/${numericId}`, payload).subscribe({
-        next: () => {
+      return this.http.put(`${this.apiUrl}/varieties/${numericId}`, payload).pipe(
+        tap(() => {
           this.showToast(`Category "${name}" updated successfully!`);
           this.refreshData();
-        },
-        error: () => this.updateLocalClothingType(id, name, fields, styles)
-      });
+        }),
+        catchError(() => {
+          this.updateLocalClothingType(id, name, fields, styles);
+          return of(null);
+        })
+      );
     } else {
       this.updateLocalClothingType(id, name, fields, styles);
+      return of(null);
     }
   }
 
@@ -206,18 +210,22 @@ export class StorageService {
     this.showToast(`Category "${name}" updated locally!`);
   }
 
-  deleteClothingType(id: string): void {
+  deleteClothingType(id: string): Observable<any> {
     const numericId = Number(id);
     if (!isNaN(numericId)) {
-      this.http.delete(`${this.apiUrl}/varieties/${numericId}`).subscribe({
-        next: () => {
+      return this.http.delete(`${this.apiUrl}/varieties/${numericId}`).pipe(
+        tap(() => {
           this.showToast('Category deleted successfully!', 'danger');
           this.refreshData();
-        },
-        error: () => this.deleteLocalClothingType(id)
-      });
+        }),
+        catchError(() => {
+          this.deleteLocalClothingType(id);
+          return of(null);
+        })
+      );
     } else {
       this.deleteLocalClothingType(id);
+      return of(null);
     }
   }
 
@@ -338,7 +346,7 @@ export class StorageService {
   }
 
   // --- Bill CRUD ---
-  addBill(bill: Omit<Bill, 'id' | 'billNumber'>): Bill {
+  addBill(bill: Omit<Bill, 'id' | 'billNumber'>): Observable<Bill> {
     const count = this.billsSignal().length + 1001;
     const generatedBillNumber = 'INV-' + count;
     const payload = {
@@ -367,23 +375,43 @@ export class StorageService {
       billNumber: generatedBillNumber
     };
 
-    this.http.post<any>(`${this.apiUrl}/billing`, payload).subscribe({
-      next: () => {
+    return this.http.post<any>(`${this.apiUrl}/billing`, payload).pipe(
+      map(res => {
         this.showToast(`Invoice ${generatedBillNumber} created!`);
         this.refreshData();
-      },
-      error: () => {
+        return {
+          id: String(res.id),
+          billNumber: res.billNumber,
+          customerName: res.customerName,
+          mobileNumber: res.mobileNumber,
+          date: res.date,
+          dueDate: res.dueDate,
+          items: (res.items || []).map((it: any) => ({
+            id: String(it.id),
+            clothingTypeId: String(it.clothingTypeId || ''),
+            clothingTypeName: it.clothingTypeName,
+            quantity: it.quantity,
+            price: it.price,
+            description: it.description
+          })),
+          totalAmount: res.totalAmount,
+          discount: res.discount,
+          grandTotal: res.grandTotal,
+          paid: Boolean(res.paid),
+          notes: res.notes
+        };
+      }),
+      catchError(() => {
         const updated = [newBill, ...this.billsSignal()];
         this.billsSignal.set(updated);
         localStorage.setItem('tailor_bills', JSON.stringify(updated));
         this.showToast(`Invoice ${generatedBillNumber} created locally!`);
-      }
-    });
-
-    return newBill;
+        return of(newBill);
+      })
+    );
   }
 
-  updateBill(id: string, bill: Omit<Bill, 'id' | 'billNumber'>): void {
+  updateBill(id: string, bill: Omit<Bill, 'id' | 'billNumber'>): Observable<any> {
     const numericId = Number(id);
     const existing = this.billsSignal().find(b => b.id === id);
     const payload = {
@@ -408,15 +436,19 @@ export class StorageService {
     };
 
     if (!isNaN(numericId)) {
-      this.http.put(`${this.apiUrl}/billing/${numericId}`, payload).subscribe({
-        next: () => {
+      return this.http.put(`${this.apiUrl}/billing/${numericId}`, payload).pipe(
+        tap(() => {
           this.showToast(`Invoice ${payload.billNumber} updated!`);
           this.refreshData();
-        },
-        error: () => this.updateLocalBill(id, bill)
-      });
+        }),
+        catchError(() => {
+          this.updateLocalBill(id, bill);
+          return of(null);
+        })
+      );
     } else {
       this.updateLocalBill(id, bill);
+      return of(null);
     }
   }
 
@@ -429,18 +461,22 @@ export class StorageService {
     this.showToast('Invoice updated locally!');
   }
 
-  deleteBill(id: string): void {
+  deleteBill(id: string): Observable<any> {
     const numericId = Number(id);
     if (!isNaN(numericId)) {
-      this.http.delete(`${this.apiUrl}/billing/${numericId}`).subscribe({
-        next: () => {
+      return this.http.delete(`${this.apiUrl}/billing/${numericId}`).pipe(
+        tap(() => {
           this.showToast('Invoice deleted successfully!', 'danger');
           this.refreshData();
-        },
-        error: () => this.deleteLocalBill(id)
-      });
+        }),
+        catchError(() => {
+          this.deleteLocalBill(id);
+          return of(null);
+        })
+      );
     } else {
       this.deleteLocalBill(id);
+      return of(null);
     }
   }
 

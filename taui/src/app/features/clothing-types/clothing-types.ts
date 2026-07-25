@@ -133,20 +133,30 @@ export class ClothingTypesComponent {
         return;
       }
 
-      const newType = this.storageService.addClothingType(name, this.fields, this.styles);
-      this.selectType(newType);
+      this.storageService.addClothingType(name, this.fields, this.styles).subscribe({
+        next: (newType) => {
+          this.selectType(newType);
+          this.isCreating.set(false);
+          this.isEditing.set(false);
+        }
+      });
     } else if (this.isEditing()) {
       const type = this.selectedType();
       if (!type) return;
 
-      this.storageService.updateClothingType(type.id, name, this.fields, this.styles);
-      // Reload selected type
-      const updated = this.clothingTypes().find(t => t.id === type.id) || null;
-      this.selectedType.set(updated);
+      this.storageService.updateClothingType(type.id, name, this.fields, this.styles).subscribe({
+        next: () => {
+          this.selectedType.set({
+            ...type,
+            name,
+            fields: [...this.fields],
+            styles: [...this.styles]
+          });
+          this.isCreating.set(false);
+          this.isEditing.set(false);
+        }
+      });
     }
-
-    this.isCreating.set(false);
-    this.isEditing.set(false);
   }
 
   cancel(): void {
@@ -170,14 +180,19 @@ export class ClothingTypesComponent {
   executeDelete(): void {
     const target = this.deleteTarget();
     if (target) {
-      this.storageService.deleteClothingType(target.id);
+      this.storageService.deleteClothingType(target.id).subscribe({
+        next: () => {
+          if (this.clothingTypes().length > 0) {
+            this.selectedType.set(this.clothingTypes()[0]);
+          } else {
+            this.selectedType.set(null);
+          }
+        }
+      });
       this.deleteTarget.set(null);
       this.selectedType.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);
-      if (this.clothingTypes().length > 0) {
-        this.selectedType.set(this.clothingTypes()[0]);
-      }
     }
   }
 }

@@ -224,20 +224,28 @@ export class BillingComponent {
     };
 
     if (this.isCreating()) {
-      this.storageService.addBill(billData);
-      setTimeout(() => {
-        this.page.set(0);
-        this.loadPagedData();
-      }, 300);
+      this.storageService.addBill(billData).subscribe({
+        next: () => {
+          this.page.set(0);
+          this.loadPagedData();
+        }
+      });
     } else if (this.isEditing()) {
       const bill = this.selectedBill();
       if (!bill) return;
-      this.storageService.updateBill(bill.id, billData);
-      setTimeout(() => {
-        this.loadPagedData();
-        const updated = this.bills().find(x => x.id === bill.id) || null;
-        this.selectedBill.set(updated);
-      }, 300);
+      this.storageService.updateBill(bill.id, billData).subscribe({
+        next: () => {
+          this.loadPagedData();
+          this.selectedBill.set({
+            ...bill,
+            ...billData,
+            items: billData.items.map((item, idx) => ({
+              ...item,
+              id: item.id || `bi-${Date.now()}-${idx}`
+            }))
+          });
+        }
+      });
     }
 
     this.isCreating.set(false);
@@ -263,14 +271,15 @@ export class BillingComponent {
   executeDelete(): void {
     const target = this.deleteTarget();
     if (target) {
-      this.storageService.deleteBill(target.id);
+      this.storageService.deleteBill(target.id).subscribe({
+        next: () => {
+          this.loadPagedData();
+        }
+      });
       this.deleteTarget.set(null);
       this.selectedBill.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);
-      setTimeout(() => {
-        this.loadPagedData();
-      }, 300);
     }
   }
 
