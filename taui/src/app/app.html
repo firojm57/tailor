@@ -18,74 +18,51 @@
 
     <!-- Navigation Links -->
     <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-h-0">
-      <a 
-        routerLink="/dashboard" 
-        routerLinkActive="bg-[#1e3478] text-white shadow-xs" 
-        [routerLinkActiveOptions]="{exact: true}"
-        (click)="isSidebarOpen.set(false)"
-        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-      >
-        <i class='bx bx-grid-alt mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-        Dashboard
-      </a>
-
-      <a 
-        routerLink="/measurements" 
-        routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-        (click)="isSidebarOpen.set(false)"
-        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-      >
-        <i class='bx bx-ruler mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-        Measurements
-      </a>
-
-      <a 
-        routerLink="/clothing-types" 
-        routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-        (click)="isSidebarOpen.set(false)"
-        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-      >
-        <i class='bx bx-closet mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-        Clothing Types
-      </a>
-
-      <!-- Billing & Invoices Menu with Submenu -->
-      <div class="space-y-1">
-        <button 
-          (click)="toggleBillingSubmenu()"
-          class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-        >
-          <div class="flex items-center">
-            <i class='bx bx-receipt mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-            <span>Billing & Invoices</span>
-          </div>
-          <i class='bx bx-chevron-down text-indigo-300 transition-transform duration-200' [ngClass]="isBillingSubmenuOpen() ? 'rotate-180' : ''"></i>
-        </button>
-
-        @if (isBillingSubmenuOpen()) {
-          <div class="pl-9 space-y-1">
-            <a 
-              routerLink="/billing" 
-              [routerLinkActiveOptions]="{exact: true}"
-              routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-              (click)="isSidebarOpen.set(false)"
-              class="flex items-center px-3 py-2 text-xs font-medium rounded-md text-indigo-200 hover:bg-[#1e3478] hover:text-white transition-all"
+      @for (item of navItems; track item.route) {
+        @if (!item.children) {
+          <a 
+            [routerLink]="item.route" 
+            routerLinkActive="bg-[#1e3478] text-white shadow-xs" 
+            [routerLinkActiveOptions]="{exact: !!item.exact}"
+            (click)="isSidebarOpen.set(false)"
+            class="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
+          >
+            <i class="bx {{ item.icon }} mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors"></i>
+            {{ item.label }}
+          </a>
+        } @else {
+          <!-- Submenu -->
+          <div class="space-y-1">
+            <button 
+              (click)="toggleBillingSubmenu()"
+              class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
             >
-              <i class='bx bx-list-ul mr-2 text-sm'></i>
-              Invoice Registry
-            </a>
-            <a 
-              routerLink="/billing/create" 
-              routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-              (click)="isSidebarOpen.set(false)"
-              class="flex items-center px-3 py-2 text-xs font-medium rounded-md text-indigo-200 hover:bg-[#1e3478] hover:text-white transition-all"
-            >
-              <i class='bx bx-plus-circle mr-2 text-sm'></i>
-              Create Invoice
-            </a>
+              <div class="flex items-center">
+                <i class="bx {{ item.icon }} mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors"></i>
+                <span>{{ item.label }}</span>
+              </div>
+              <i class="bx bx-chevron-down text-indigo-300 transition-transform duration-200" [ngClass]="isBillingSubmenuOpen() ? 'rotate-180' : ''"></i>
+            </button>
+
+            @if (isBillingSubmenuOpen()) {
+              <div class="pl-9 space-y-1">
+                @for (child of item.children; track child.route) {
+                  <a 
+                    [routerLink]="child.route" 
+                    [routerLinkActiveOptions]="{exact: !!child.exact}"
+                    routerLinkActive="bg-[#1e3478] text-white shadow-xs"
+                    (click)="isSidebarOpen.set(false)"
+                    class="flex items-center px-3 py-2 text-xs font-medium rounded-md text-indigo-200 hover:bg-[#1e3478] hover:text-white transition-all"
+                  >
+                    <i class="bx {{ child.icon }} mr-2 text-sm"></i>
+                    {{ child.label }}
+                  </a>
+                }
+              </div>
+            }
           </div>
         }
-      </div>
+      }
     </nav>
 
     <!-- Sidebar footer -->

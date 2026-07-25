@@ -112,11 +112,11 @@
             <tr class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <th class="py-2.5 px-3 text-center w-12">Include</th>
               <th class="py-2.5 px-3 w-28">Category</th>
-              <th class="py-2.5 px-3">Key Dimensions (Brief Summary)</th>
+              <th class="py-2.5 px-3 w-56">Key Dimensions</th>
               <th class="py-2.5 px-3 w-20 text-center">Qty</th>
-              <th class="py-2.5 px-3 w-28 text-right">Price (₹)</th>
-              <th class="py-2.5 px-3 w-28 text-right">Total (₹)</th>
-              <th class="py-2.5 px-3 text-right w-20">Actions</th>
+              <th class="py-2.5 px-3 w-24 text-right">Price (₹)</th>
+              <th class="py-2.5 px-3 w-24 text-right">Total (₹)</th>
+              <th class="py-2.5 px-3 text-right w-24">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-sm">
@@ -139,8 +139,8 @@
                   </span>
                 </td>
 
-                <!-- Key Dimensions (Multiple Lines, No Horizontal Scrollbar) -->
-                <td class="py-2.5 px-3 text-xs text-slate-600">
+                <!-- Key Dimensions (Brief Summary) -->
+                <td class="py-2.5 px-3 text-xs text-slate-600 w-56">
                   <p class="font-mono text-slate-700 leading-normal text-xs break-words whitespace-normal">
                     {{ item.keyDimensions }}
                   </p>
@@ -163,7 +163,7 @@
                     type="number" 
                     min="0"
                     [(ngModel)]="item.price" 
-                    class="form-input w-24 text-right py-1 px-1.5 text-xs font-medium font-mono"
+                    class="form-input w-20 text-right py-1 px-1.5 text-xs font-medium font-mono"
                     [disabled]="!item.selected"
                   />
                 </td>
@@ -174,23 +174,25 @@
                 </td>
 
                 <!-- Actions (Edit/Delete) -->
-                <td class="py-2.5 px-3 text-right space-x-1">
-                  @if (item.measurementId) {
+                <td class="py-2.5 px-3 text-right whitespace-nowrap w-24">
+                  <div class="inline-flex items-center justify-end space-x-1">
+                    @if (item.measurementId) {
+                      <button 
+                        (click)="openEditMeasurementModal(item)" 
+                        class="p-1.5 rounded-md text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors inline-flex items-center justify-center"
+                        title="Edit Dimensions"
+                      >
+                        <i class='bx bx-edit-alt text-base'></i>
+                      </button>
+                    }
                     <button 
-                      (click)="openEditMeasurementModal(item)" 
-                      class="p-1.5 rounded-md text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors inline-flex items-center justify-center"
-                      title="Edit Dimensions"
+                      (click)="removeItem($index)" 
+                      class="p-1.5 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors inline-flex items-center justify-center"
+                      title="Remove Item"
                     >
-                      <i class='bx bx-edit-alt text-base'></i>
+                      <i class='bx bx-trash text-base'></i>
                     </button>
-                  }
-                  <button 
-                    (click)="removeItem($index)" 
-                    class="p-1.5 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors inline-flex items-center justify-center"
-                    title="Remove Item"
-                  >
-                    <i class='bx bx-trash text-base'></i>
-                  </button>
+                  </div>
                 </td>
               </tr>
             } @empty {

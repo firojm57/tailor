@@ -5,6 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { StorageService } from './core/services/storage.service';
 import { filter } from 'rxjs/operators';
 
+export interface NavItem {
+  label: string;
+  route: string;
+  icon: string;
+  exact?: boolean;
+  children?: { label: string; route: string; icon: string; exact?: boolean }[];
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -24,6 +32,21 @@ export class App {
 
   readonly tailorName = 'Ahmed Khan';
   readonly tailorRole = 'Master Tailor';
+
+  readonly navItems: NavItem[] = [
+    { label: 'Dashboard', route: '/dashboard', icon: 'bx-grid-alt', exact: true },
+    { label: 'Measurements', route: '/measurements', icon: 'bx-ruler' },
+    { 
+      label: 'Billing & Invoices', 
+      route: '/billing', 
+      icon: 'bx-receipt',
+      children: [
+        { label: 'Invoice Registry', route: '/billing', icon: 'bx-list-ul', exact: true },
+        { label: 'Create Invoice', route: '/billing/create', icon: 'bx-plus-circle' }
+      ]
+    },
+    { label: 'Clothing Types', route: '/clothing-types', icon: 'bx-closet' }
+  ];
 
   constructor() {
     this.updateTitle(this.router.url);

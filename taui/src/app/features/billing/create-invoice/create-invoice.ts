@@ -38,7 +38,7 @@ export class CreateInvoiceComponent {
   set mobileNumber(val: string) { this.mobileNumberSignal.set(val || ''); }
 
   billDate = new Date().toISOString().split('T')[0];
-  dueDate = '';
+  dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   notes = '';
   discount = 0;
 
