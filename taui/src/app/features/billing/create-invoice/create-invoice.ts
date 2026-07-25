@@ -235,7 +235,7 @@ export class CreateInvoiceComponent {
 
   saveMeasurement(): void {
     if (!this.customerName.trim() || !this.mobileNumber.trim()) {
-      alert('Please enter Customer Name and Mobile Number first.');
+      this.storageService.showToast('Please enter Customer Name and Mobile Number first.', 'danger');
       return;
     }
     const type = this.selectedType();
@@ -287,13 +287,13 @@ export class CreateInvoiceComponent {
   // --- Save Invoice ---
   saveInvoice(): void {
     if (!this.customerName.trim() || !this.mobileNumber.trim()) {
-      alert('Please provide customer name and mobile number.');
+      this.storageService.showToast('Please provide customer name and mobile number.', 'danger');
       return;
     }
 
     const selectedItems = this.items().filter(i => i.selected);
     if (selectedItems.length === 0) {
-      alert('Please select at least one measurement item to include in the invoice.');
+      this.storageService.showToast('Please select at least one measurement item to include in the invoice.', 'danger');
       return;
     }
 

@@ -216,7 +216,7 @@ export class MeasurementsComponent {
     const typeId = this.formClothingTypeId();
 
     if (!name || !mobile || !date || !typeId) {
-      alert('Please fill out all required fields.');
+      this.storageService.showToast('Please fill out all required fields.', 'danger');
       return;
     }
 

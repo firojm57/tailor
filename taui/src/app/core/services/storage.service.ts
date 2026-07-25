@@ -17,11 +17,27 @@ export class StorageService {
   private readonly billsSignal = signal<Bill[]>([]);
   readonly toastMessage = signal<{ text: string; type: 'success' | 'danger' | 'info' } | null>(null);
 
+  private toastTimeout: any = null;
+
   showToast(text: string, type: 'success' | 'danger' | 'info' = 'success'): void {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+      this.toastTimeout = null;
+    }
     this.toastMessage.set({ text, type });
-    setTimeout(() => {
+    const duration = type === 'danger' ? 7000 : 4000;
+    this.toastTimeout = setTimeout(() => {
       this.toastMessage.set(null);
-    }, 3500);
+      this.toastTimeout = null;
+    }, duration);
+  }
+
+  clearToast(): void {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+      this.toastTimeout = null;
+    }
+    this.toastMessage.set(null);
   }
 
   // Public readonly views of the signals
@@ -87,7 +103,10 @@ export class StorageService {
         this.clothingTypesSignal.set(types);
         localStorage.setItem('tailor_clothing_types', JSON.stringify(types));
       },
-      error: () => this.loadLocalTypes()
+      error: () => {
+        this.showToast('Failed to load categories from server. Using offline data.', 'danger');
+        this.loadLocalTypes();
+      }
     });
 
     // 2. Fetch measurements
@@ -107,7 +126,10 @@ export class StorageService {
         this.measurementsSignal.set(meas);
         localStorage.setItem('tailor_measurements', JSON.stringify(meas));
       },
-      error: () => this.loadLocalMeasurements()
+      error: () => {
+        this.showToast('Failed to load measurements from server. Using offline data.', 'danger');
+        this.loadLocalMeasurements();
+      }
     });
 
     // 3. Fetch bills
@@ -137,7 +159,10 @@ export class StorageService {
         this.billsSignal.set(bills);
         localStorage.setItem('tailor_bills', JSON.stringify(bills));
       },
-      error: () => this.loadLocalBills()
+      error: () => {
+        this.showToast('Failed to load invoices from server. Using offline data.', 'danger');
+        this.loadLocalBills();
+      }
     });
   }
 
@@ -170,11 +195,12 @@ export class StorageService {
         this.refreshData();
         return newType;
       }),
-      catchError(() => {
+      catchError((err) => {
         const updated = [...this.clothingTypesSignal(), newType];
         this.clothingTypesSignal.set(updated);
         localStorage.setItem('tailor_clothing_types', JSON.stringify(updated));
-        this.showToast(`Category "${name}" created locally!`);
+        const msg = err?.error?.message || `API Error: Could not save category "${name}" on server. Saved locally.`;
+        this.showToast(msg, 'danger');
         return of(newType);
       })
     );
@@ -190,8 +216,10 @@ export class StorageService {
           this.showToast(`Category "${name}" updated successfully!`);
           this.refreshData();
         }),
-        catchError(() => {
+        catchError((err) => {
           this.updateLocalClothingType(id, name, fields, styles);
+          const msg = err?.error?.message || `API Error: Could not update category "${name}" on server. Updated locally.`;
+          this.showToast(msg, 'danger');
           return of(null);
         })
       );
@@ -218,8 +246,10 @@ export class StorageService {
           this.showToast('Category deleted successfully!', 'danger');
           this.refreshData();
         }),
-        catchError(() => {
+        catchError((err) => {
           this.deleteLocalClothingType(id);
+          const msg = err?.error?.message || 'API Error: Could not delete category on server. Deleted locally.';
+          this.showToast(msg, 'danger');
           return of(null);
         })
       );
@@ -265,11 +295,12 @@ export class StorageService {
           style: res.style
         };
       }),
-      catchError(() => {
+      catchError((err) => {
         const updated = [newMeas, ...this.measurementsSignal()];
         this.measurementsSignal.set(updated);
         localStorage.setItem('tailor_measurements', JSON.stringify(updated));
-        this.showToast(`Measurement for "${measurement.customerName}" saved locally!`);
+        const msg = err?.error?.message || `API Error: Could not save measurement for "${measurement.customerName}" on server. Saved locally.`;
+        this.showToast(msg, 'danger');
         return of(newMeas);
       })
     );
@@ -295,8 +326,10 @@ export class StorageService {
           this.showToast(`Measurement for "${measurement.customerName}" updated!`);
           this.refreshData();
         }),
-        catchError(() => {
+        catchError((err) => {
           this.updateLocalMeasurement(id, measurement);
+          const msg = err?.error?.message || `API Error: Could not update measurement for "${measurement.customerName}" on server. Updated locally.`;
+          this.showToast(msg, 'danger');
           return of(null);
         })
       );
@@ -323,8 +356,10 @@ export class StorageService {
           this.showToast('Measurement deleted successfully!', 'danger');
           this.refreshData();
         }),
-        catchError(() => {
+        catchError((err) => {
           this.deleteLocalMeasurement(id);
+          const msg = err?.error?.message || 'API Error: Could not delete measurement on server. Deleted locally.';
+          this.showToast(msg, 'danger');
           return of(null);
         })
       );
@@ -401,11 +436,12 @@ export class StorageService {
           notes: res.notes
         };
       }),
-      catchError(() => {
+      catchError((err) => {
         const updated = [newBill, ...this.billsSignal()];
         this.billsSignal.set(updated);
         localStorage.setItem('tailor_bills', JSON.stringify(updated));
-        this.showToast(`Invoice ${generatedBillNumber} created locally!`);
+        const msg = err?.error?.message || `API Error: Could not save invoice ${generatedBillNumber} on server. Saved locally.`;
+        this.showToast(msg, 'danger');
         return of(newBill);
       })
     );
@@ -441,8 +477,10 @@ export class StorageService {
           this.showToast(`Invoice ${payload.billNumber} updated!`);
           this.refreshData();
         }),
-        catchError(() => {
+        catchError((err) => {
           this.updateLocalBill(id, bill);
+          const msg = err?.error?.message || `API Error: Could not update invoice ${payload.billNumber} on server. Updated locally.`;
+          this.showToast(msg, 'danger');
           return of(null);
         })
       );
@@ -469,8 +507,10 @@ export class StorageService {
           this.showToast('Invoice deleted successfully!', 'danger');
           this.refreshData();
         }),
-        catchError(() => {
+        catchError((err) => {
           this.deleteLocalBill(id);
+          const msg = err?.error?.message || 'API Error: Could not delete invoice on server. Deleted locally.';
+          this.showToast(msg, 'danger');
           return of(null);
         })
       );
@@ -511,7 +551,8 @@ export class StorageService {
           last: res.last
         };
       }),
-      catchError(() => {
+      catchError((err) => {
+        this.showToast('API Error: Could not fetch measurements page from server.', 'danger');
         const all = this.measurementsSignal();
         const filtered = all.filter(m => {
           const matchSearch = !search || m.customerName.toLowerCase().includes(search.toLowerCase()) || m.mobileNumber.includes(search);
@@ -565,7 +606,8 @@ export class StorageService {
           last: res.last
         };
       }),
-      catchError(() => {
+      catchError((err) => {
+        this.showToast('API Error: Could not fetch billing records from server.', 'danger');
         const all = this.billsSignal();
         const filtered = all.filter(b => {
           return !search || b.billNumber.toLowerCase().includes(search.toLowerCase()) ||

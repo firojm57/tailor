@@ -81,7 +81,7 @@ export class ClothingTypesComponent {
     const text = this.newFieldText.trim();
     if (!text) return;
     if (this.fields.some(f => f.toLowerCase() === text.toLowerCase())) {
-      alert('Field already exists.');
+      this.storageService.showToast('Field already exists.', 'danger');
       return;
     }
     this.fields.push(text);
@@ -90,7 +90,7 @@ export class ClothingTypesComponent {
 
   removeField(index: number): void {
     if (this.fields.length <= 1) {
-      alert('A clothing type must have at least one measurement field.');
+      this.storageService.showToast('A clothing type must have at least one measurement field.', 'danger');
       return;
     }
     this.fields.splice(index, 1);
@@ -100,7 +100,7 @@ export class ClothingTypesComponent {
     const text = this.newStyleText.trim();
     if (!text) return;
     if (this.styles.some(s => s.toLowerCase() === text.toLowerCase())) {
-      alert('Style already exists.');
+      this.storageService.showToast('Style already exists.', 'danger');
       return;
     }
     this.styles.push(text);
@@ -114,12 +114,12 @@ export class ClothingTypesComponent {
   save(): void {
     const name = this.typeName.trim();
     if (!name) {
-      alert('Please enter a clothing type name.');
+      this.storageService.showToast('Please enter a clothing type name.', 'danger');
       return;
     }
 
     if (this.fields.length === 0) {
-      alert('Please add at least one measurement field.');
+      this.storageService.showToast('Please add at least one measurement field.', 'danger');
       return;
     }
 
@@ -129,7 +129,7 @@ export class ClothingTypesComponent {
         t => t.name.toLowerCase() === name.toLowerCase()
       );
       if (duplicate) {
-        alert('A clothing type with this name already exists.');
+        this.storageService.showToast('A clothing type with this name already exists.', 'danger');
         return;
       }
 

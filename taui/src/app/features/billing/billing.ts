@@ -201,12 +201,12 @@ export class BillingComponent {
     const dueDate = this.formDueDate;
 
     if (!name || !mobile || !date) {
-      alert('Please enter customer details.');
+      this.storageService.showToast('Please enter customer details.', 'danger');
       return;
     }
 
     if (this.formItems().length === 0) {
-      alert('Please add at least one item to the bill.');
+      this.storageService.showToast('Please add at least one item to the bill.', 'danger');
       return;
     }
 

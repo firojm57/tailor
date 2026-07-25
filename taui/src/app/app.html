@@ -170,6 +170,9 @@
       >
         <i class='bx text-lg' [ngClass]="toast.type === 'danger' ? 'bx-error-alt text-rose-400' : 'bx-check-circle text-emerald-400'"></i>
         <span>{{ toast.text }}</span>
+        <button (click)="storageService.clearToast()" class="ml-2 text-slate-400 hover:text-white focus:outline-none flex items-center justify-center p-0.5" title="Dismiss">
+          <i class='bx bx-x text-base'></i>
+        </button>
       </div>
     }
 
