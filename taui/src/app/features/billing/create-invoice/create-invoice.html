@@ -1,251 +1,278 @@
 <div class="h-full flex flex-col p-6 space-y-4 box-border overflow-hidden">
-  <!-- Fixed Top Action Bar -->
-  <div class="flex items-center justify-between gap-4 shrink-0">
-    <div class="flex items-center space-x-3">
-      <a routerLink="/billing" class="btn-light text-sm py-2 px-3.5 inline-flex items-center gap-1">
-        <i class='bx bx-arrow-back text-lg'></i> Back to Invoices
-      </a>
-    </div>
 
-    <div class="flex items-center space-x-3">
-      <button (click)="saveInvoice()" class="btn-primary text-sm py-2 px-4">
-        <i class='bx bx-check-circle text-lg mr-1.5'></i> Save Invoice
-      </button>
-    </div>
-  </div>
+  <!-- Main 2-Column Dashboard Grid (Fits in viewport without vertical page scrolling) -->
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
+    
+    <!-- LEFT COLUMN (60-65%): Customer Info + Measurements & Line Items Table -->
+    <div class="lg:col-span-7 xl:col-span-8 flex flex-col space-y-4 min-h-0 overflow-hidden">
+      
+      <!-- Customer Information Card (Compact Header) -->
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-3 shrink-0">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-2">
+            <i class='bx bx-user text-base text-[#3b82f6]'></i> Customer Information
+          </h3>
+          <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">Type mobile for auto-suggestion</span>
+        </div>
 
-  <!-- Main Scrollable Form Content -->
-  <div class="flex-1 min-h-0 overflow-y-auto space-y-6">
-    <!-- Customer Details Card -->
-    <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-6 space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-2">
-          <i class='bx bx-user text-base text-slate-400'></i> Customer Information
-        </h3>
-        <span class="text-xs text-slate-400 font-medium">Type mobile to auto-suggest registered customers</span>
-      </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Customer Mobile (Auto-Suggestion) -->
+          <div class="relative mobile-autocomplete-container">
+            <label for="mobileNumber" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              Mobile Number *
+            </label>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="mobileNumber" 
+                [ngModel]="mobileNumber" 
+                (ngModelChange)="onMobileInput($event)"
+                (focus)="showMobileSuggestions = true"
+                placeholder="e.g. 9876543210"
+                class="form-input w-full text-sm py-1.5 px-3"
+                autocomplete="off"
+              />
+              <i class='bx bx-phone absolute right-3 top-2 text-slate-400 text-base pointer-events-none'></i>
+            </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Customer Mobile (Auto-Suggestion) -->
-        <div class="relative mobile-autocomplete-container">
-          <label for="mobileNumber" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Mobile Number *
-          </label>
-          <div class="relative">
-            <input 
-              type="text" 
-              id="mobileNumber" 
-              [ngModel]="mobileNumber" 
-              (ngModelChange)="onMobileInput($event)"
-              (focus)="showMobileSuggestions = true"
-              placeholder="e.g. 9876543210"
-              class="form-input w-full text-sm py-2 px-3.5"
-              autocomplete="off"
-            />
-            <i class='bx bx-phone absolute right-3 top-2.5 text-slate-400 text-base pointer-events-none'></i>
+            <!-- Mobile Auto-Suggest Dropdown -->
+            @if (showMobileSuggestions && customerSuggestions().length > 0) {
+              <div class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-30 max-h-48 overflow-y-auto divide-y divide-slate-100">
+                @for (sug of customerSuggestions(); track sug.mobile) {
+                  <button 
+                    type="button"
+                    (click)="selectMobileSuggestion(sug.mobile, sug.name)"
+                    class="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 flex justify-between items-center transition-colors group"
+                  >
+                    <span class="font-medium text-slate-900 group-hover:text-indigo-900">{{ sug.name }}</span>
+                    <span class="font-mono text-slate-500 group-hover:text-indigo-700">{{ sug.mobile }}</span>
+                  </button>
+                }
+              </div>
+            }
           </div>
 
-          <!-- Mobile Auto-Suggest Dropdown -->
-          @if (showMobileSuggestions && customerSuggestions().length > 0) {
-            <div class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-30 max-h-48 overflow-y-auto divide-y divide-slate-100">
-              @for (sug of customerSuggestions(); track sug.mobile) {
-                <button 
-                  type="button"
-                  (click)="selectMobileSuggestion(sug.mobile, sug.name)"
-                  class="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 flex justify-between items-center transition-colors group"
-                >
-                  <span class="font-medium text-slate-900 group-hover:text-indigo-900">{{ sug.name }}</span>
-                  <span class="font-mono text-slate-500 group-hover:text-indigo-700">{{ sug.mobile }}</span>
-                </button>
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Customer Name -->
-        <div>
-          <label for="customerName" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Customer Name *
-          </label>
-          <input 
-            type="text" 
-            id="customerName" 
-            [(ngModel)]="customerName" 
-            placeholder="e.g. Rajesh Kumar"
-            class="form-input w-full text-sm py-2 px-3.5"
-          />
-        </div>
-
-        <!-- Expected Delivery Date -->
-        <div>
-          <label for="dueDate" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Expected Delivery Date
-          </label>
-          <input 
-            type="date" 
-            id="dueDate" 
-            [(ngModel)]="dueDate" 
-            class="form-input w-full text-sm py-2 px-3.5"
-          />
+          <!-- Customer Name -->
+          <div>
+            <label for="customerName" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              Customer Name *
+            </label>
+            <input 
+              type="text" 
+              id="customerName" 
+              [(ngModel)]="customerName" 
+              placeholder="e.g. Rajesh Kumar"
+              class="form-input w-full text-sm py-1.5 px-3"
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Measurements & Invoice Items Table Card -->
-    <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 flex flex-col overflow-hidden">
-      <div class="px-6 py-3.5 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between shrink-0">
-        <div class="flex items-center space-x-2">
-          <i class='bx bx-ruler text-slate-400 text-base'></i>
-          <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider">Customer Measurements & Line Items</h3>
+      <!-- Line Items / Measurements Table Card -->
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200/80 flex justify-between items-center bg-slate-50/50 shrink-0">
+          <div>
+            <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <i class='bx bx-ruler text-base text-[#3b82f6]'></i> Customer Measurements & Line Items
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Selected measurements will be converted into invoice line items.</p>
+          </div>
+          <button 
+            (click)="openAddMeasurementModal()" 
+            class="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 shrink-0"
+          >
+            <i class='bx bx-plus text-base'></i> Add / Select Measurement
+          </button>
         </div>
-        <button 
-          (click)="openAddMeasurementModal()" 
-          class="btn-primary text-xs py-1.5 px-3"
-        >
-          <i class='bx bx-plus text-base mr-1'></i> Add / Select Measurement
-        </button>
-      </div>
 
-      <div class="overflow-hidden">
-        <table class="w-full text-left border-collapse table-fixed">
-          <thead class="bg-slate-50 border-b border-slate-200">
-            <tr class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <th class="py-2.5 px-3 text-center w-12">Include</th>
-              <th class="py-2.5 px-3 w-28">Category</th>
-              <th class="py-2.5 px-3 w-56">Key Dimensions</th>
-              <th class="py-2.5 px-3 w-20 text-center">Qty</th>
-              <th class="py-2.5 px-3 w-24 text-right">Price (₹)</th>
-              <th class="py-2.5 px-3 w-24 text-right">Total (₹)</th>
-              <th class="py-2.5 px-3 text-right w-24">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 text-sm">
-            @for (item of items(); track $index) {
-              <tr class="hover:bg-slate-50/60 transition-colors" [ngClass]="item.selected ? '' : 'opacity-50 bg-slate-50/30'">
-                <!-- Select Checkbox -->
-                <td class="py-2.5 px-3 text-center">
-                  <input 
-                    type="checkbox" 
-                    [checked]="item.selected" 
-                    (change)="toggleItemSelection($index)"
-                    class="w-4 h-4 rounded text-[#082068] focus:ring-[#082068]/20 border-slate-300"
-                  />
-                </td>
+        <!-- Table Container with Internal Scroll -->
+        <div class="flex-1 overflow-y-auto min-h-0">
+          <table class="w-full text-left border-collapse table-fixed">
+            <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+              <tr class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th class="py-2.5 px-3 text-center w-12">Include</th>
+                <th class="py-2.5 px-3 w-28">Category</th>
+                <th class="py-2.5 px-3 w-56">Key Dimensions</th>
+                <th class="py-2.5 px-3 w-20 text-center">Qty</th>
+                <th class="py-2.5 px-3 w-24 text-right">Price (₹)</th>
+                <th class="py-2.5 px-3 w-24 text-right">Total (₹)</th>
+                <th class="py-2.5 px-3 text-right w-24">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+              @for (item of items(); track $index) {
+                <tr class="hover:bg-slate-50/60 transition-colors" [ngClass]="item.selected ? '' : 'opacity-50 bg-slate-50/30'">
+                  <!-- Select Checkbox -->
+                  <td class="py-2.5 px-3 text-center">
+                    <input 
+                      type="checkbox" 
+                      [checked]="item.selected" 
+                      (change)="toggleItemSelection($index)"
+                      class="w-4 h-4 rounded text-[#082068] focus:ring-[#082068]/20 border-slate-300"
+                    />
+                  </td>
 
-                <!-- Category Name -->
-                <td class="py-2.5 px-3 font-medium text-slate-900">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                    {{ item.clothingTypeName }}
-                  </span>
-                </td>
+                  <!-- Category Name -->
+                  <td class="py-2.5 px-3 font-medium text-slate-900">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                      {{ item.clothingTypeName }}
+                    </span>
+                  </td>
 
-                <!-- Key Dimensions (Brief Summary) -->
-                <td class="py-2.5 px-3 text-xs text-slate-600 w-56">
-                  <p class="font-mono text-slate-700 leading-normal text-xs break-words whitespace-normal">
-                    {{ item.keyDimensions }}
-                  </p>
-                </td>
+                  <!-- Key Dimensions -->
+                  <td class="py-2.5 px-3 text-xs text-slate-600 w-56">
+                    <p class="font-mono text-slate-700 leading-normal text-xs break-words whitespace-normal">
+                      {{ item.keyDimensions }}
+                    </p>
+                  </td>
 
-                <!-- Quantity -->
-                <td class="py-2.5 px-3 text-center">
-                  <input 
-                    type="number" 
-                    min="1"
-                    [(ngModel)]="item.quantity" 
-                    class="form-input w-16 text-center py-1 px-1.5 text-xs font-medium"
-                    [disabled]="!item.selected"
-                  />
-                </td>
+                  <!-- Quantity -->
+                  <td class="py-2.5 px-3 text-center">
+                    <input 
+                      type="number" 
+                      min="1"
+                      [(ngModel)]="item.quantity" 
+                      class="form-input w-16 text-center py-1 px-1.5 text-xs font-medium"
+                      [disabled]="!item.selected"
+                    />
+                  </td>
 
-                <!-- Unit Price -->
-                <td class="py-2.5 px-3 text-right">
-                  <input 
-                    type="number" 
-                    min="0"
-                    [(ngModel)]="item.price" 
-                    class="form-input w-20 text-right py-1 px-1.5 text-xs font-medium font-mono"
-                    [disabled]="!item.selected"
-                  />
-                </td>
+                  <!-- Unit Price -->
+                  <td class="py-2.5 px-3 text-right">
+                    <input 
+                      type="number" 
+                      min="0"
+                      [(ngModel)]="item.price" 
+                      class="form-input w-20 text-right py-1 px-1.5 text-xs font-medium font-mono"
+                      [disabled]="!item.selected"
+                    />
+                  </td>
 
-                <!-- Line Total -->
-                <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-900 text-xs">
-                  ₹{{ item.selected ? (item.quantity * item.price).toFixed(2) : '0.00' }}
-                </td>
+                  <!-- Line Total -->
+                  <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-900 text-xs">
+                    ₹{{ item.selected ? (item.quantity * item.price).toFixed(2) : '0.00' }}
+                  </td>
 
-                <!-- Actions (Edit/Delete) -->
-                <td class="py-2.5 px-3 text-right whitespace-nowrap w-24">
-                  <div class="inline-flex items-center justify-end space-x-1">
-                    @if (item.measurementId) {
+                  <!-- Actions (Edit/Delete) -->
+                  <td class="py-2.5 px-3 text-right whitespace-nowrap w-24">
+                    <div class="inline-flex items-center justify-end space-x-1">
+                      @if (item.measurementId) {
+                        <button 
+                          (click)="openEditMeasurementModal(item)" 
+                          class="p-1.5 rounded-md text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors inline-flex items-center justify-center"
+                          title="Edit Dimensions"
+                        >
+                          <i class='bx bx-edit-alt text-base'></i>
+                        </button>
+                      }
                       <button 
-                        (click)="openEditMeasurementModal(item)" 
-                        class="p-1.5 rounded-md text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors inline-flex items-center justify-center"
-                        title="Edit Dimensions"
+                        (click)="removeItem($index)" 
+                        class="p-1.5 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors inline-flex items-center justify-center"
+                        title="Remove Item"
                       >
-                        <i class='bx bx-edit-alt text-base'></i>
+                        <i class='bx bx-trash text-base'></i>
                       </button>
-                    }
-                    <button 
-                      (click)="removeItem($index)" 
-                      class="p-1.5 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors inline-flex items-center justify-center"
-                      title="Remove Item"
-                    >
-                      <i class='bx bx-trash text-base'></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="7" class="py-10 text-center text-slate-400 text-xs">
-                  <i class='bx bx-ruler text-3xl text-slate-300 mb-1.5 block'></i>
-                  No measurements selected for this customer. Enter a registered mobile number above or click "+ Add / Select Measurement".
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-slate-400 text-xs">
+                    <i class='bx bx-ruler text-4xl text-slate-300 mb-2 block'></i>
+                    No measurements selected for this customer.<br/>Enter a registered mobile number above or click "+ Add / Select Measurement".
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Summary & Notes Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Notes & Instructions -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-5 space-y-3">
-        <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider">Invoice Notes & Stitching Instructions</h3>
+    <!-- RIGHT COLUMN (35-40%): Dates, Notes, Payment Summary & Action Button -->
+    <div class="lg:col-span-5 xl:col-span-4 flex flex-col space-y-4 min-h-0 overflow-y-auto">
+      
+      <!-- Dates Card -->
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-3 shrink-0">
+        <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+          <i class='bx bx-calendar text-base text-[#3b82f6]'></i> Invoice Dates
+        </h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="billDate" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              Invoice Date
+            </label>
+            <input 
+              type="date" 
+              id="billDate" 
+              [(ngModel)]="billDate" 
+              class="form-input w-full text-xs py-1.5 px-2.5"
+            />
+          </div>
+          <div>
+            <label for="dueDate" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              Expected Delivery
+            </label>
+            <input 
+              type="date" 
+              id="dueDate" 
+              [(ngModel)]="dueDate" 
+              class="form-input w-full text-xs py-1.5 px-2.5"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Stitching Instructions & Notes -->
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-2 shrink-0">
+        <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+          <i class='bx bx-note text-base text-[#3b82f6]'></i> Notes & Instructions
+        </h3>
         <textarea 
           [(ngModel)]="notes" 
-          rows="4" 
-          placeholder="e.g. Special fitting notes, advance payment details..."
-          class="form-input w-full text-sm p-3"
+          rows="3" 
+          placeholder="e.g. Special fitting notes, urgent delivery..."
+          class="form-input w-full text-xs p-2.5"
         ></textarea>
       </div>
 
-      <!-- Payment Summary Card -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-5 space-y-3">
-        <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider">Payment Breakdown</h3>
-        <div class="space-y-2 border-b border-slate-100 pb-3 text-sm">
-          <div class="flex justify-between items-center text-slate-600">
-            <span>Subtotal</span>
-            <span class="font-mono font-medium text-slate-900">₹{{ subtotal().toFixed(2) }}</span>
+      <!-- Payment Breakdown Card -->
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-3 shrink-0 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <i class='bx bx-wallet text-base text-[#3b82f6]'></i> Payment Breakdown
+          </h3>
+          <div class="space-y-2.5 border-b border-slate-100 pb-3 text-xs">
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Subtotal</span>
+              <span class="font-mono font-semibold text-slate-900 text-sm">₹{{ subtotal().toFixed(2) }}</span>
+            </div>
+
+            <div class="flex justify-between items-center text-slate-600">
+              <span>Discount (₹)</span>
+              <input 
+                type="number" 
+                min="0"
+                [(ngModel)]="discount" 
+                class="form-input w-24 text-right py-1 px-2 text-xs font-mono"
+              />
+            </div>
           </div>
 
-          <div class="flex justify-between items-center text-slate-600">
-            <span>Discount (₹)</span>
-            <input 
-              type="number" 
-              min="0"
-              [(ngModel)]="discount" 
-              class="form-input w-28 text-right py-1 px-2 text-sm font-mono"
-            />
+          <div class="flex justify-between items-center pt-3">
+            <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Grand Total</span>
+            <span class="font-extrabold text-xl text-[#082068] font-mono">₹{{ grandTotal().toFixed(2) }}</span>
           </div>
         </div>
 
-        <div class="flex justify-between items-center pt-1">
-          <span class="font-bold text-slate-900 text-sm uppercase tracking-wider">Grand Total</span>
-          <span class="font-extrabold text-lg text-[#082068] font-mono">₹{{ grandTotal().toFixed(2) }}</span>
+        <!-- Primary Action Button: Save Invoice -->
+        <div class="pt-4 border-t border-slate-100">
+          <button (click)="saveInvoice()" class="btn-primary w-full py-3 px-4 text-sm font-bold flex items-center justify-center gap-2 shadow-md">
+            <i class='bx bx-check-circle text-xl'></i> Save Invoice
+          </button>
         </div>
       </div>
+
     </div>
   </div>
 </div>
