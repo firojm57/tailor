@@ -1,10 +1,10 @@
 <div class="h-full flex flex-col p-6 space-y-4 box-border overflow-hidden">
 
-  <!-- Main 2-Column Dashboard Grid (Fits in viewport without vertical page scrolling) -->
-  <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0 overflow-hidden">
+  <!-- Main 2-Column Dashboard Grid (60:40 Ratio, Fits in viewport) -->
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6 min-h-0 overflow-hidden">
     
-    <!-- LEFT COLUMN (60-65%): Customer Info + Measurements & Line Items Table -->
-    <div class="lg:col-span-7 xl:col-span-8 flex flex-col space-y-4 min-h-0 overflow-hidden">
+    <!-- LEFT COLUMN (60%): Customer Info + Measurements & Line Items Table -->
+    <div class="lg:col-span-3 flex flex-col space-y-4 min-h-0 overflow-hidden">
       
       <!-- Customer Information Card (Compact Header) -->
       <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-3 shrink-0">
@@ -85,25 +85,25 @@
           </button>
         </div>
 
-        <!-- Table Container with Internal Scroll -->
-        <div class="flex-1 overflow-y-auto min-h-0">
+        <!-- Table Container with Internal Scroll (No Horizontal Scrollbar) -->
+        <div class="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
           <table class="w-full text-left border-collapse table-fixed">
             <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-              <tr class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <th class="py-2.5 px-3 text-center w-12">Include</th>
-                <th class="py-2.5 px-3 w-28">Category</th>
-                <th class="py-2.5 px-3 w-56">Key Dimensions</th>
-                <th class="py-2.5 px-3 w-20 text-center">Qty</th>
-                <th class="py-2.5 px-3 w-24 text-right">Price (₹)</th>
-                <th class="py-2.5 px-3 w-24 text-right">Total (₹)</th>
-                <th class="py-2.5 px-3 text-right w-24">Actions</th>
+              <tr class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <th class="py-2.5 px-2 text-center w-10">Add</th>
+                <th class="py-2.5 px-2 w-24">Category</th>
+                <th class="py-2.5 px-2">Key Dimensions</th>
+                <th class="py-2.5 px-2 w-16 text-center">Qty</th>
+                <th class="py-2.5 px-2 w-20 text-right">Price (₹)</th>
+                <th class="py-2.5 px-2 w-20 text-right">Total (₹)</th>
+                <th class="py-2.5 px-2 text-right w-20">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 text-sm">
+            <tbody class="divide-y divide-slate-100 text-xs">
               @for (item of items(); track $index) {
                 <tr class="hover:bg-slate-50/60 transition-colors" [ngClass]="item.selected ? '' : 'opacity-50 bg-slate-50/30'">
                   <!-- Select Checkbox -->
-                  <td class="py-2.5 px-3 text-center">
+                  <td class="py-2.5 px-2 text-center">
                     <input 
                       type="checkbox" 
                       [checked]="item.selected" 
@@ -113,53 +113,53 @@
                   </td>
 
                   <!-- Category Name -->
-                  <td class="py-2.5 px-3 font-medium text-slate-900">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+                  <td class="py-2.5 px-2 font-medium text-slate-900 truncate">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-800 border border-slate-200 truncate">
                       {{ item.clothingTypeName }}
                     </span>
                   </td>
 
-                  <!-- Key Dimensions -->
-                  <td class="py-2.5 px-3 text-xs text-slate-600 w-56">
-                    <p class="font-mono text-slate-700 leading-normal text-xs break-words whitespace-normal">
+                  <!-- Key Dimensions (Truncated with Tooltip) -->
+                  <td class="py-2.5 px-2 text-[11px] text-slate-600">
+                    <p class="font-mono text-slate-700 text-[11px] truncate" [title]="item.keyDimensions">
                       {{ item.keyDimensions }}
                     </p>
                   </td>
 
                   <!-- Quantity -->
-                  <td class="py-2.5 px-3 text-center">
+                  <td class="py-2.5 px-2 text-center">
                     <input 
                       type="number" 
                       min="1"
                       [(ngModel)]="item.quantity" 
-                      class="form-input w-16 text-center py-1 px-1.5 text-xs font-medium"
+                      class="form-input w-14 text-center py-1 px-1 text-xs font-medium"
                       [disabled]="!item.selected"
                     />
                   </td>
 
                   <!-- Unit Price -->
-                  <td class="py-2.5 px-3 text-right">
+                  <td class="py-2.5 px-2 text-right">
                     <input 
                       type="number" 
                       min="0"
                       [(ngModel)]="item.price" 
-                      class="form-input w-20 text-right py-1 px-1.5 text-xs font-medium font-mono"
+                      class="form-input w-16 text-right py-1 px-1 text-xs font-medium font-mono"
                       [disabled]="!item.selected"
                     />
                   </td>
 
                   <!-- Line Total -->
-                  <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-900 text-xs">
+                  <td class="py-2.5 px-2 text-right font-mono font-semibold text-slate-900 text-xs">
                     ₹{{ item.selected ? (item.quantity * item.price).toFixed(2) : '0.00' }}
                   </td>
 
                   <!-- Actions (Edit/Delete) -->
-                  <td class="py-2.5 px-3 text-right whitespace-nowrap w-24">
-                    <div class="inline-flex items-center justify-end space-x-1">
+                  <td class="py-2.5 px-2 text-right whitespace-nowrap w-20">
+                    <div class="inline-flex items-center justify-end space-x-0.5">
                       @if (item.measurementId) {
                         <button 
                           (click)="openEditMeasurementModal(item)" 
-                          class="p-1.5 rounded-md text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors inline-flex items-center justify-center"
+                          class="p-1 rounded text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors flex items-center justify-center"
                           title="Edit Dimensions"
                         >
                           <i class='bx bx-edit-alt text-base'></i>
@@ -167,7 +167,7 @@
                       }
                       <button 
                         (click)="removeItem($index)" 
-                        class="p-1.5 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors inline-flex items-center justify-center"
+                        class="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center"
                         title="Remove Item"
                       >
                         <i class='bx bx-trash text-base'></i>
@@ -189,37 +189,21 @@
       </div>
     </div>
 
-    <!-- RIGHT COLUMN (35-40%): Dates, Notes, Payment Summary & Action Button -->
-    <div class="lg:col-span-5 xl:col-span-4 flex flex-col space-y-4 min-h-0 overflow-y-auto">
+    <!-- RIGHT COLUMN (40%): Delivery Date, Notes, Payment Summary & Action Button -->
+    <div class="lg:col-span-2 flex flex-col space-y-4 min-h-0 overflow-y-auto">
       
-      <!-- Dates Card -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-3 shrink-0">
+      <!-- Expected Delivery Date Card -->
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-2 shrink-0">
         <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-          <i class='bx bx-calendar text-base text-[#3b82f6]'></i> Invoice Dates
+          <i class='bx bx-calendar text-base text-[#3b82f6]'></i> Expected Delivery Date
         </h3>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label for="billDate" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-              Invoice Date
-            </label>
-            <input 
-              type="date" 
-              id="billDate" 
-              [(ngModel)]="billDate" 
-              class="form-input w-full text-xs py-1.5 px-2.5"
-            />
-          </div>
-          <div>
-            <label for="dueDate" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
-              Expected Delivery
-            </label>
-            <input 
-              type="date" 
-              id="dueDate" 
-              [(ngModel)]="dueDate" 
-              class="form-input w-full text-xs py-1.5 px-2.5"
-            />
-          </div>
+        <div>
+          <input 
+            type="date" 
+            id="dueDate" 
+            [(ngModel)]="dueDate" 
+            class="form-input w-full text-xs py-1.5 px-3"
+          />
         </div>
       </div>
 
