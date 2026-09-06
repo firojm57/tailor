@@ -114,4 +114,31 @@ describe('StorageService', () => {
     expect(req.request.urlWithParams).toContain('query=ali');
     req.flush([{ mobile: '9000000001', name: 'Alice' }]);
   });
+
+  // ── Toggle Bill Paid ──────────────────────────────────────────────────────
+
+  it('toggleBillPaid(): sends PATCH to /billing/:id/paid and updates paid signal', () => {
+    let result: any = null;
+    service.toggleBillPaid('101').subscribe(res => {
+      result = res;
+    });
+
+    const req = httpMock.expectOne(r => r.url.includes('/billing/101/paid'));
+    expect(req.request.method).toBe('PATCH');
+    req.flush({
+      id: 101,
+      billNumber: 'INV-101',
+      customerName: 'Customer X',
+      mobileNumber: '9999999999',
+      date: '2026-09-06',
+      totalAmount: 1500,
+      grandTotal: 1500,
+      paid: true,
+      items: []
+    });
+
+    expect(result).toBeTruthy();
+    expect(result.paid).toBe(true);
+    expect(service.toastMessage()?.text).toBe('Invoice marked as Paid!');
+  });
 });

@@ -283,6 +283,23 @@ export class BillingComponent {
     }
   }
 
+  togglePaid(bill: Bill, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.storageService.toggleBillPaid(bill.id).subscribe({
+      next: (updated) => {
+        const nextPaid = updated ? updated.paid : !bill.paid;
+        this.pagedBills.update(bills =>
+          bills.map(b => b.id === bill.id ? { ...b, paid: nextPaid } : b)
+        );
+        if (this.selectedBill()?.id === bill.id) {
+          this.selectedBill.update(b => b ? { ...b, paid: nextPaid } : null);
+        }
+      }
+    });
+  }
+
   printInvoice(): void {
     window.print();
   }

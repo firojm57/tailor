@@ -542,6 +542,69 @@ export class StorageService {
     this.showToast('Invoice deleted locally!', 'danger');
   }
 
+  toggleBillPaid(id: string): Observable<Bill | null> {
+    const numericId = Number(id);
+    if (!isNaN(numericId)) {
+      return this.http.patch<any>(`${this.apiUrl}/billing/${numericId}/paid`, {}).pipe(
+        map(res => {
+          const isPaid = Boolean(res.paid);
+          const updated = this.billsSignal().map(b =>
+            b.id === id ? { ...b, paid: isPaid } : b
+          );
+          this.billsSignal.set(updated);
+          localStorage.setItem('tailor_bills', JSON.stringify(updated));
+          this.showToast(isPaid ? 'Invoice marked as Paid!' : 'Invoice marked as Unpaid!', 'success');
+          return {
+            id: String(res.id),
+            billNumber: res.billNumber,
+            customerName: res.customerName,
+            mobileNumber: res.mobileNumber,
+            date: res.date,
+            dueDate: res.dueDate,
+            totalAmount: res.totalAmount || 0,
+            discount: res.discount || 0,
+            grandTotal: res.grandTotal || 0,
+            paid: isPaid,
+            notes: res.notes || '',
+            items: (res.items || []).map((it: any) => ({
+              id: String(it.id),
+              clothingTypeId: String(it.clothingTypeId || ''),
+              clothingTypeName: it.clothingTypeName,
+              quantity: it.quantity || 1,
+              price: it.price || 0,
+              description: it.description || ''
+            }))
+          };
+        }),
+        catchError((err) => {
+          const current = this.billsSignal().find(b => b.id === id);
+          if (current) {
+            const nextPaid = !current.paid;
+            const updated = this.billsSignal().map(b =>
+              b.id === id ? { ...b, paid: nextPaid } : b
+            );
+            this.billsSignal.set(updated);
+            localStorage.setItem('tailor_bills', JSON.stringify(updated));
+            this.showToast(nextPaid ? 'Invoice marked as Paid locally!' : 'Invoice marked as Unpaid locally!', 'info');
+          }
+          return of(null);
+        })
+      );
+    } else {
+      const current = this.billsSignal().find(b => b.id === id);
+      if (current) {
+        const nextPaid = !current.paid;
+        const updated = this.billsSignal().map(b =>
+          b.id === id ? { ...b, paid: nextPaid } : b
+        );
+        this.billsSignal.set(updated);
+        localStorage.setItem('tailor_bills', JSON.stringify(updated));
+        this.showToast(nextPaid ? 'Invoice marked as Paid locally!' : 'Invoice marked as Unpaid locally!', 'info');
+      }
+      return of(null);
+    }
+  }
+
   getMeasurementsPage(page: number, size: number, search: string, clothingTypeId: string): Observable<PagedResult<CustomerMeasurement>> {
     const typeId = clothingTypeId ? Number(clothingTypeId) : 0;
     const url = `${this.apiUrl}/measurements?page=${page}&size=${size}&search=${encodeURIComponent(search)}&clothingTypeId=${typeId}`;

@@ -45,6 +45,7 @@ export class CreateInvoiceComponent {
   readonly discountSignal = signal<number>(0);
   get discount(): number { return this.discountSignal(); }
   set discount(val: number) { this.discountSignal.set(Number(val) || 0); }
+  readonly paidStatus = signal<boolean>(false);
 
   // Mobile suggestion state
   showMobileSuggestions = false;
@@ -429,7 +430,7 @@ export class CreateInvoiceComponent {
       totalAmount: this.subtotal(),
       discount: Number(this.discount) || 0,
       grandTotal: this.grandTotal(),
-      paid: false,
+      paid: this.paidStatus(),
       notes: this.notes,
       items: billItems
     }).subscribe({
