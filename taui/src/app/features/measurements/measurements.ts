@@ -304,4 +304,13 @@ export class MeasurementsComponent {
   getFieldsList(values: Record<string, string>): { key: string, value: string }[] {
     return Object.entries(values || {}).map(([key, value]) => ({ key, value }));
   }
+
+  @HostListener('document:keydown.escape')
+  handleKeydownEscape(): void {
+    if (this.deleteTarget()) {
+      this.cancelDelete();
+    } else if (this.isCreating() || this.isEditing() || this.selectedMeasurement()) {
+      this.cancel();
+    }
+  }
 }

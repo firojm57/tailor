@@ -300,4 +300,13 @@ export class BillingComponent {
       year: 'numeric'
     });
   }
+
+  @HostListener('document:keydown.escape')
+  handleKeydownEscape(): void {
+    if (this.deleteTarget()) {
+      this.cancelDelete();
+    } else if (this.selectedBill() || this.isCreating() || this.isEditing()) {
+      this.cancel();
+    }
+  }
 }

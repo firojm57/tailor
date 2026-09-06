@@ -2,14 +2,16 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { ClothingType, CustomerMeasurement, Bill, DashboardStats } from '../models/models';
+import { ClothingType, CustomerMeasurement, Bill, DashboardStats, InvoiceDraft } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StorageService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api';
+  private readonly apiUrl = typeof window !== 'undefined' && window.location.port === '4200'
+    ? 'http://localhost:8080/api'
+    : '/api';
 
   // Signals representing the state
   private readonly clothingTypesSignal = signal<ClothingType[]>([]);
@@ -64,7 +66,13 @@ export class StorageService {
   });
 
   constructor() {
-    this.refreshData();
+    this.loadLocalTypes();
+    this.loadLocalMeasurements();
+    this.loadLocalBills();
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tailor_auth_token') : null;
+    if (token) {
+      this.refreshData(true);
+    }
   }
 
   searchCustomerSuggestions(query: string): Observable<{ mobile: string; name: string }[]> {
@@ -90,7 +98,7 @@ export class StorageService {
     );
   }
 
-  refreshData(): void {
+  refreshData(silent = false): void {
     // 1. Fetch varieties / clothing types
     this.http.get<any[]>(`${this.apiUrl}/varieties`).subscribe({
       next: (data) => {
@@ -104,7 +112,9 @@ export class StorageService {
         localStorage.setItem('tailor_clothing_types', JSON.stringify(types));
       },
       error: () => {
-        this.showToast('Failed to load categories from server. Using offline data.', 'danger');
+        if (!silent) {
+          this.showToast('Unable to connect to server. Using offline categories.', 'danger');
+        }
         this.loadLocalTypes();
       }
     });
@@ -127,7 +137,9 @@ export class StorageService {
         localStorage.setItem('tailor_measurements', JSON.stringify(meas));
       },
       error: () => {
-        this.showToast('Failed to load measurements from server. Using offline data.', 'danger');
+        if (!silent) {
+          this.showToast('Unable to connect to server. Using offline measurements.', 'danger');
+        }
         this.loadLocalMeasurements();
       }
     });
@@ -142,6 +154,7 @@ export class StorageService {
           customerName: item.customerName,
           mobileNumber: item.mobileNumber,
           date: item.date,
+          dueDate: item.dueDate,
           totalAmount: item.totalAmount || 0,
           discount: item.discount || 0,
           grandTotal: item.grandTotal || 0,
@@ -160,7 +173,9 @@ export class StorageService {
         localStorage.setItem('tailor_bills', JSON.stringify(bills));
       },
       error: () => {
-        this.showToast('Failed to load invoices from server. Using offline data.', 'danger');
+        if (!silent) {
+          this.showToast('Unable to connect to server. Using offline invoices.', 'danger');
+        }
         this.loadLocalBills();
       }
     });
@@ -583,6 +598,7 @@ export class StorageService {
           customerName: item.customerName,
           mobileNumber: item.mobileNumber,
           date: item.date,
+          dueDate: item.dueDate,
           totalAmount: item.totalAmount || 0,
           discount: item.discount || 0,
           grandTotal: item.grandTotal || 0,
@@ -627,7 +643,31 @@ export class StorageService {
       })
     );
   }
+
+  // --- Invoice Draft DB Endpoints ---
+  saveDraft(draft: InvoiceDraft): Observable<InvoiceDraft> {
+    return this.http.post<InvoiceDraft>(`${this.apiUrl}/drafts`, draft).pipe(
+      catchError((err) => {
+        // Fallback to in-memory draft object with temp id if offline
+        const tempId = draft.id || 'draft_' + Date.now();
+        return of({ ...draft, id: tempId });
+      })
+    );
+  }
+
+  getDraft(id: string): Observable<InvoiceDraft | null> {
+    return this.http.get<InvoiceDraft>(`${this.apiUrl}/drafts/${id}`).pipe(
+      catchError(() => of(null))
+    );
+  }
+
+  deleteDraft(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/drafts/${id}`).pipe(
+      catchError(() => of(undefined))
+    );
+  }
 }
+
 
 export interface PagedResult<T> {
   content: T[];

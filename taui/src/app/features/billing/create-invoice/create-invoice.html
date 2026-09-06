@@ -1,25 +1,26 @@
-<div class="h-full flex flex-col p-6 space-y-3 box-border overflow-hidden">
+<div class="h-full flex flex-col p-3.5 md:p-4 space-y-2.5 box-border overflow-hidden">
 
-  <!-- Compact Top Action Bar (Minimal Padding & Margin) -->
+  <!-- Compact Top Action Bar -->
   <div class="flex items-center justify-between shrink-0 pb-0.5">
     <div class="flex items-center space-x-2">
-      <span class="text-xs text-slate-400 font-medium">Drafting custom customer invoice</span>
+      <h2 class="text-base font-bold text-slate-900 tracking-tight">Customer Order</h2>
     </div>
-    <button (click)="saveInvoice()" class="btn-primary text-xs py-1.5 px-4 font-semibold flex items-center gap-1.5 shadow-xs">
+    <button (click)="saveInvoice()"
+      class="btn-primary text-xs py-1.5 px-3.5 font-semibold flex items-center gap-1.5 shadow-xs">
       <i class='bx bx-check-circle text-base'></i> Save Invoice
     </button>
   </div>
 
   <!-- Main 2-Column Dashboard Grid (60:40 Ratio, Fits in viewport) -->
-  <div class="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6 min-h-0 overflow-hidden">
-    
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5 min-h-0 overflow-hidden">
+
     <!-- LEFT COLUMN (60%): Customer Info + Measurements & Line Items Table -->
-    <div class="lg:col-span-3 flex flex-col space-y-4 min-h-0 overflow-hidden">
-      
+    <div class="lg:col-span-3 flex flex-col space-y-3 min-h-0 overflow-hidden">
+
       <!-- Customer Information Card (Compact Header) -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-3 shrink-0">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-          <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-2">
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-3 space-y-2 shrink-0">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+          <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
             <i class='bx bx-user text-base text-[#3b82f6]'></i> Customer Information
           </h3>
           <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">Type mobile for auto-suggestion</span>
@@ -28,70 +29,57 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- Customer Mobile (Auto-Suggestion) -->
           <div class="relative mobile-autocomplete-container">
-            <label for="mobileNumber" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label for="mobileNumber"
+              class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Mobile Number *
             </label>
             <div class="relative">
-              <input 
-                type="text" 
-                id="mobileNumber" 
-                [ngModel]="mobileNumber" 
-                (ngModelChange)="onMobileInput($event)"
-                (focus)="showMobileSuggestions = true"
-                placeholder="e.g. 9876543210"
-                class="form-input w-full text-sm py-1.5 px-3"
-                autocomplete="off"
-              />
-              <i class='bx bx-phone absolute right-3 top-2 text-slate-400 text-base pointer-events-none'></i>
+              <input type="text" id="mobileNumber" [ngModel]="mobileNumber" (ngModelChange)="onMobileInput($event)"
+                (focus)="showMobileSuggestions = true" placeholder="Enter mobile number"
+                class="form-input w-full text-xs py-1 px-2.5" autocomplete="off" />
+              <i class='bx bx-phone absolute right-2.5 top-1.5 text-slate-400 text-base pointer-events-none'></i>
             </div>
 
             <!-- Mobile Auto-Suggest Dropdown -->
             @if (showMobileSuggestions && customerSuggestions().length > 0) {
-              <div class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-30 max-h-48 overflow-y-auto divide-y divide-slate-100">
-                @for (sug of customerSuggestions(); track sug.mobile) {
-                  <button 
-                    type="button"
-                    (click)="selectMobileSuggestion(sug.mobile, sug.name)"
-                    class="w-full text-left px-4 py-2.5 text-xs hover:bg-indigo-50 flex justify-between items-center transition-colors group"
-                  >
-                    <span class="font-medium text-slate-900 group-hover:text-indigo-900">{{ sug.name }}</span>
-                    <span class="font-mono text-slate-500 group-hover:text-indigo-700">{{ sug.mobile }}</span>
-                  </button>
-                }
-              </div>
+            <div
+              class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-30 max-h-48 overflow-y-auto divide-y divide-slate-100">
+              @for (sug of customerSuggestions(); track sug.mobile) {
+              <button type="button" (click)="selectMobileSuggestion(sug.mobile, sug.name)"
+                class="w-full text-left px-3.5 py-2 text-xs hover:bg-indigo-50 flex justify-between items-center transition-colors group">
+                <span class="font-medium text-slate-900 group-hover:text-indigo-900">{{ sug.name }}</span>
+                <span class="font-mono text-slate-500 group-hover:text-indigo-700">{{ sug.mobile }}</span>
+              </button>
+              }
+            </div>
             }
           </div>
 
           <!-- Customer Name -->
           <div>
-            <label for="customerName" class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+            <label for="customerName"
+              class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Customer Name *
             </label>
-            <input 
-              type="text" 
-              id="customerName" 
-              [(ngModel)]="customerName" 
-              placeholder="e.g. Rajesh Kumar"
-              class="form-input w-full text-sm py-1.5 px-3"
-            />
+            <input type="text" id="customerName" [(ngModel)]="customerName" (ngModelChange)="saveDraft()" placeholder="Enter customer name"
+              class="form-input w-full text-xs py-1 px-2.5" />
           </div>
         </div>
       </div>
 
       <!-- Line Items / Measurements Table Card -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div class="p-3.5 border-b border-slate-200/80 flex justify-between items-center bg-slate-50/50 shrink-0">
+      <div
+        class="bg-white rounded-xl shadow-xs border border-slate-200/80 flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="p-2.5 px-3 border-b border-slate-200/80 flex justify-between items-center bg-slate-50/50 shrink-0">
           <div>
             <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <i class='bx bx-ruler text-base text-[#3b82f6]'></i> Customer Measurements & Line Items
+              <i class='bx bx-ruler text-base text-[#3b82f6]'></i> Customer Measurements
             </h3>
-            <p class="text-[11px] text-slate-400 mt-0.5">Selected measurements will be converted into invoice line items.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Selected measurements will be converted into invoice items.</p>
           </div>
-          <button 
-            (click)="openAddMeasurementModal()" 
-            class="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 shrink-0"
-          >
-            <i class='bx bx-plus text-base'></i> Add / Select Measurement
+          <button (click)="openAddMeasurementModal()"
+            class="btn-primary text-xs py-1 px-2.5 flex items-center gap-1 shrink-0">
+            <i class='bx bx-plus text-base'></i> Add / Select
           </button>
         </div>
 
@@ -100,98 +88,84 @@
           <table class="w-full text-left border-collapse table-fixed">
             <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <th class="py-2.5 px-2 text-center w-10">Add</th>
-                <th class="py-2.5 px-2 w-24">Category</th>
-                <th class="py-2.5 px-2">Key Dimensions</th>
-                <th class="py-2.5 px-2 w-16 text-center">Qty</th>
-                <th class="py-2.5 px-2 w-20 text-right">Price (₹)</th>
-                <th class="py-2.5 px-2 w-20 text-right">Total (₹)</th>
-                <th class="py-2.5 px-2 text-right w-20">Actions</th>
+                <th class="py-2 px-2 text-center w-10">Add</th>
+                <th class="py-2 px-2 w-22">Category</th>
+                <th class="py-2 px-2">Key Dimensions</th>
+                <th class="py-2 px-2 w-14 text-center">Qty</th>
+                <th class="py-2 px-2 w-22 text-right">Price (₹)</th>
+                <th class="py-2 px-2 w-22 text-right">Total (₹)</th>
+                <th class="py-2 px-2 text-right w-20">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-xs">
               @for (item of items(); track $index) {
-                <tr class="hover:bg-slate-50/60 transition-colors" [ngClass]="item.selected ? '' : 'opacity-50 bg-slate-50/30'">
-                  <!-- Select Checkbox -->
-                  <td class="py-2.5 px-2 text-center">
-                    <input 
-                      type="checkbox" 
-                      [checked]="item.selected" 
-                      (change)="toggleItemSelection($index)"
-                      class="w-4 h-4 rounded text-[#082068] focus:ring-[#082068]/20 border-slate-300"
-                    />
-                  </td>
+              <tr class="hover:bg-slate-50/60 transition-colors"
+                [ngClass]="item.selected ? '' : 'opacity-50 bg-slate-50/30'">
+                <!-- Select Checkbox -->
+                <td class="py-1.5 px-2 text-center">
+                  <input type="checkbox" [checked]="item.selected" (change)="toggleItemSelection($index)"
+                    class="w-4 h-4 rounded text-[#082068] focus:ring-[#082068]/20 border-slate-300" />
+                </td>
 
-                  <!-- Category Name -->
-                  <td class="py-2.5 px-2 font-medium text-slate-900 truncate">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-800 border border-slate-200 truncate">
-                      {{ item.clothingTypeName }}
-                    </span>
-                  </td>
+                <!-- Category Name -->
+                <td class="py-1.5 px-2 font-medium text-slate-900 truncate">
+                  <span
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-800 border border-slate-200 truncate">
+                    {{ item.clothingTypeName }}
+                  </span>
+                </td>
 
-                  <!-- Key Dimensions (Truncated with Tooltip) -->
-                  <td class="py-2.5 px-2 text-[11px] text-slate-600">
-                    <p class="font-mono text-slate-700 text-[11px] truncate" [title]="item.keyDimensions">
-                      {{ item.keyDimensions }}
-                    </p>
-                  </td>
+                <!-- Key Dimensions (Truncated with Tooltip) -->
+                <td class="py-1.5 px-2 text-[11px] text-slate-600">
+                  <p class="font-mono text-slate-700 text-[11px] truncate" [title]="item.keyDimensions">
+                    {{ item.keyDimensions }}
+                  </p>
+                </td>
 
-                  <!-- Quantity -->
-                  <td class="py-2.5 px-2 text-center">
-                    <input 
-                      type="number" 
-                      min="1"
-                      [(ngModel)]="item.quantity" 
-                      class="form-input w-14 text-center py-1 px-1 text-xs font-medium"
-                      [disabled]="!item.selected"
-                    />
-                  </td>
+                <!-- Quantity -->
+                <td class="py-1.5 px-2 text-center">
+                  <input type="number" min="1" [(ngModel)]="item.quantity" (ngModelChange)="saveDraft()"
+                    class="form-input form-input-table w-12 text-center text-xs font-medium" [disabled]="!item.selected" />
+                </td>
 
-                  <!-- Unit Price -->
-                  <td class="py-2.5 px-2 text-right">
-                    <input 
-                      type="number" 
-                      min="0"
-                      [(ngModel)]="item.price" 
-                      class="form-input w-16 text-right py-1 px-1 text-xs font-medium font-mono"
-                      [disabled]="!item.selected"
-                    />
-                  </td>
+                <!-- Unit Price -->
+                <td class="py-1.5 px-2 text-right">
+                  <input type="number" min="0" [(ngModel)]="item.price" (ngModelChange)="saveDraft()"
+                    class="form-input form-input-table w-20 text-right text-xs font-medium font-mono"
+                    [disabled]="!item.selected" />
+                </td>
 
-                  <!-- Line Total -->
-                  <td class="py-2.5 px-2 text-right font-mono font-semibold text-slate-900 text-xs">
-                    ₹{{ item.selected ? (item.quantity * item.price).toFixed(2) : '0.00' }}
-                  </td>
+                <!-- Line Total -->
+                <td class="py-1.5 px-2 text-right font-mono font-semibold text-slate-900 text-xs">
+                  ₹{{ item.selected ? (item.quantity * item.price).toFixed(2) : '0.00' }}
+                </td>
 
-                  <!-- Actions (Edit/Delete) -->
-                  <td class="py-2.5 px-2 text-right whitespace-nowrap w-20">
-                    <div class="inline-flex items-center justify-end space-x-0.5">
-                      @if (item.measurementId) {
-                        <button 
-                          (click)="openEditMeasurementModal(item)" 
-                          class="p-1 rounded text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors flex items-center justify-center"
-                          title="Edit Dimensions"
-                        >
-                          <i class='bx bx-edit-alt text-base'></i>
-                        </button>
-                      }
-                      <button 
-                        (click)="removeItem($index)" 
-                        class="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center"
-                        title="Remove Item"
-                      >
-                        <i class='bx bx-trash text-base'></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <!-- Actions (Edit/Delete) -->
+                <td class="py-1.5 px-2 text-right whitespace-nowrap w-20">
+                  <div class="inline-flex items-center justify-end space-x-0.5">
+                    @if (item.measurementId) {
+                    <button (click)="openEditMeasurementModal(item)"
+                      class="p-1 rounded text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 transition-colors flex items-center justify-center"
+                      title="Edit Dimensions">
+                      <i class='bx bx-edit-alt text-base'></i>
+                    </button>
+                    }
+                    <button (click)="removeItem($index)"
+                      class="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center"
+                      title="Remove Item">
+                      <i class='bx bx-trash text-base'></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
               } @empty {
-                <tr>
-                  <td colspan="7" class="py-12 text-center text-slate-400 text-xs">
-                    <i class='bx bx-ruler text-4xl text-slate-300 mb-2 block'></i>
-                    No measurements selected for this customer.<br/>Enter a registered mobile number above or click "+ Add / Select Measurement".
-                  </td>
-                </tr>
+              <tr>
+                <td colspan="7" class="py-10 text-center text-slate-400 text-xs">
+                  <i class='bx bx-ruler text-3xl text-slate-300 mb-1.5 block'></i>
+                  No measurements selected for this customer.<br />Enter a registered mobile number above or click "+
+                  Add / Select".
+                </td>
+              </tr>
               }
             </tbody>
           </table>
@@ -200,43 +174,35 @@
     </div>
 
     <!-- RIGHT COLUMN (40%): Delivery Date, Notes, Payment Summary & Action Button -->
-    <div class="lg:col-span-2 flex flex-col space-y-4 min-h-0 overflow-y-auto">
-      
+    <div class="lg:col-span-2 flex flex-col space-y-3 min-h-0 overflow-y-auto">
+
       <!-- Expected Delivery Date Card -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-2 shrink-0">
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-3 space-y-1.5 shrink-0">
         <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
           <i class='bx bx-calendar text-base text-[#3b82f6]'></i> Expected Delivery Date
         </h3>
         <div>
-          <input 
-            type="date" 
-            id="dueDate" 
-            [(ngModel)]="dueDate" 
-            class="form-input w-full text-xs py-1.5 px-3"
-          />
+          <input type="date" id="dueDate" [(ngModel)]="dueDate" (ngModelChange)="saveDraft()" class="form-input w-full text-xs py-1 px-2.5" />
         </div>
       </div>
 
       <!-- Stitching Instructions & Notes -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-2 shrink-0">
+      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-3 space-y-1.5 shrink-0">
         <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
           <i class='bx bx-note text-base text-[#3b82f6]'></i> Notes & Instructions
         </h3>
-        <textarea 
-          [(ngModel)]="notes" 
-          rows="3" 
-          placeholder="e.g. Special fitting notes, urgent delivery..."
-          class="form-input w-full text-xs p-2.5"
-        ></textarea>
+        <textarea [(ngModel)]="notes" (ngModelChange)="saveDraft()" rows="2" placeholder="e.g. Special fitting notes, urgent delivery..."
+          class="form-input w-full text-xs p-2"></textarea>
       </div>
 
       <!-- Payment Breakdown Card -->
-      <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-4 space-y-3 shrink-0 flex-1 flex flex-col justify-between">
+      <div
+        class="bg-white rounded-xl shadow-xs border border-slate-200/80 p-3.5 space-y-2 shrink-0 flex-1 flex flex-col justify-between">
         <div>
-          <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+          <h3 class="font-semibold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5 mb-2.5">
             <i class='bx bx-wallet text-base text-[#3b82f6]'></i> Payment Breakdown
           </h3>
-          <div class="space-y-2.5 border-b border-slate-100 pb-3 text-xs">
+          <div class="space-y-2 border-b border-slate-100 pb-2.5 text-xs">
             <div class="flex justify-between items-center text-slate-600">
               <span>Subtotal</span>
               <span class="font-mono font-semibold text-slate-900 text-sm">₹{{ subtotal().toFixed(2) }}</span>
@@ -244,18 +210,14 @@
 
             <div class="flex justify-between items-center text-slate-600">
               <span>Discount (₹)</span>
-              <input 
-                type="number" 
-                min="0"
-                [(ngModel)]="discount" 
-                class="form-input w-24 text-right py-1 px-2 text-xs font-mono"
-              />
+              <input type="number" min="0" [(ngModel)]="discount" (ngModelChange)="saveDraft()"
+                class="form-input form-input-table w-20 text-right py-0.5 px-1.5 text-xs font-mono" />
             </div>
           </div>
 
-          <div class="flex justify-between items-center pt-3">
+          <div class="flex justify-between items-center pt-2">
             <span class="font-bold text-slate-900 text-xs uppercase tracking-wider">Grand Total</span>
-            <span class="font-extrabold text-xl text-[#082068] font-mono">₹{{ grandTotal().toFixed(2) }}</span>
+            <span class="font-extrabold text-lg text-[#082068] font-mono">₹{{ grandTotal().toFixed(2) }}</span>
           </div>
         </div>
       </div>
@@ -266,139 +228,122 @@
 
 <!-- ==================== TABBED MEASUREMENT PICKER & RECORDER MODAL ==================== -->
 @if (isMeasurementModalOpen()) {
-  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 flex flex-col max-h-[85vh]">
-      <!-- Header with Tabs -->
-      <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
-        <div class="flex items-center space-x-4">
-          <h3 class="text-sm font-bold uppercase tracking-wider">Add Measurement to Invoice</h3>
-          
-          @if (!editingMeasurementId()) {
-            <div class="flex space-x-1 bg-slate-800 p-1 rounded-lg">
-              <button 
-                (click)="activeModalTab.set('picker')" 
-                class="px-3 py-1 text-xs font-semibold rounded-md transition-colors"
-                [ngClass]="activeModalTab() === 'picker' ? 'bg-[#082068] text-white shadow-xs' : 'text-slate-300 hover:text-white'"
-              >
-                Select Existing
-              </button>
-              <button 
-                (click)="activeModalTab.set('new')" 
-                class="px-3 py-1 text-xs font-semibold rounded-md transition-colors"
-                [ngClass]="activeModalTab() === 'new' ? 'bg-[#082068] text-white shadow-xs' : 'text-slate-300 hover:text-white'"
-              >
-                Record New
-              </button>
-            </div>
-          }
+<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+  <div
+    class="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 flex flex-col max-h-[85vh]">
+    <!-- Header with Tabs -->
+    <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+      <div class="flex items-center space-x-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider">Add Measurement to Invoice</h3>
+
+        @if (!editingMeasurementId()) {
+        <div class="flex space-x-1 bg-slate-800 p-1 rounded-lg">
+          <button (click)="activeModalTab.set('picker')"
+            class="px-3 py-1 text-xs font-semibold rounded-md transition-colors"
+            [ngClass]="activeModalTab() === 'picker' ? 'bg-[#082068] text-white shadow-xs' : 'text-slate-300 hover:text-white'">
+            Select Existing
+          </button>
+          <button (click)="activeModalTab.set('new')"
+            class="px-3 py-1 text-xs font-semibold rounded-md transition-colors"
+            [ngClass]="activeModalTab() === 'new' ? 'bg-[#082068] text-white shadow-xs' : 'text-slate-300 hover:text-white'">
+            Record New
+          </button>
         </div>
-        <button (click)="cancelMeasurementModal()" class="text-slate-400 hover:text-white">
-          <i class='bx bx-x text-2xl'></i>
-        </button>
+        }
+      </div>
+      <button (click)="cancelMeasurementModal()" class="text-slate-400 hover:text-white">
+        <i class='bx bx-x text-2xl'></i>
+      </button>
+    </div>
+
+    <!-- TAB 1: SELECT EXISTING MEASUREMENTS -->
+    @if (activeModalTab() === 'picker') {
+    <div class="p-6 space-y-4 flex-1 overflow-y-auto min-h-0">
+      <div class="relative">
+        <input type="text" [ngModel]="pickerSearchTerm()" (ngModelChange)="pickerSearchTerm.set($event)"
+          placeholder="Search by customer name, mobile, or category..."
+          class="form-input form-input-search w-full text-sm py-2" />
+        <i class='bx bx-search absolute left-3 top-2.5 text-slate-400 text-base'></i>
       </div>
 
-      <!-- TAB 1: SELECT EXISTING MEASUREMENTS -->
-      @if (activeModalTab() === 'picker') {
-        <div class="p-6 space-y-4 flex-1 overflow-y-auto min-h-0">
-          <div class="relative">
-            <input 
-              type="text" 
-              [ngModel]="pickerSearchTerm()"
-              (ngModelChange)="pickerSearchTerm.set($event)"
-              placeholder="Search by customer name, mobile, or category..." 
-              class="form-input form-input-search w-full text-sm py-2"
-            />
-            <i class='bx bx-search absolute left-3 top-2.5 text-slate-400 text-base'></i>
-          </div>
-
-          <div class="divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
-            @for (meas of pickerMeasurements(); track meas.id) {
-              <div class="p-3.5 flex items-center justify-between hover:bg-white transition-colors">
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <span class="font-bold text-sm text-slate-900">{{ meas.customerName }}</span>
-                    <span class="text-xs text-slate-500 font-mono">({{ meas.mobileNumber }})</span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-800">
-                      {{ meas.style ? meas.style + ' ' + meas.clothingTypeName : meas.clothingTypeName }}
-                    </span>
-                  </div>
-                  <p class="text-xs text-slate-600 font-mono mt-1">
-                    @for (fv of meas.values | keyvalue; track fv.key) {
-                      <span class="mr-2">{{ fv.key }}: {{ fv.value }}</span>
-                    }
-                  </p>
-                </div>
-                <button 
-                  (click)="addMeasurementFromPicker(meas)" 
-                  class="btn-primary text-xs py-1.5 px-3 whitespace-nowrap shrink-0"
-                >
-                  <i class='bx bx-plus text-sm mr-1'></i> Add
-                </button>
-              </div>
-            } @empty {
-              <div class="p-8 text-center text-slate-400 text-sm">
-                No measurements found matching search criteria. Switch to "Record New" tab to enter custom dimensions.
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- TAB 2: RECORD NEW DIMENSIONS -->
-      @if (activeModalTab() === 'new') {
-        <div class="p-6 space-y-4 flex-1 overflow-y-auto min-h-0">
+      <div class="divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50">
+        @for (meas of pickerMeasurements(); track meas.id) {
+        <div class="p-3.5 flex items-center justify-between hover:bg-white transition-colors">
           <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Clothing Category</label>
-            <select 
-              [ngModel]="selectedType()?.id" 
-              (ngModelChange)="onTypeChange($event)"
-              class="form-select w-full text-sm py-2 px-3.5"
-              [disabled]="!!editingMeasurementId()"
-            >
-              @for (type of clothingTypes(); track type.id) {
-                <option [value]="type.id">{{ type.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Style Type (optional)</label>
-            <select 
-              [(ngModel)]="modalStyle" 
-              class="form-select w-full text-sm py-2 px-3.5"
-            >
-              <option value="">-- No Style --</option>
-              @for (st of selectedType()?.styles; track st) {
-                <option [value]="st">{{ st }}</option>
-              }
-            </select>
-          </div>
-
-          @if (selectedType(); as type) {
-            <div class="space-y-3 pt-2">
-              <h4 class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Dimension Inputs (inches)</h4>
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                @for (field of type.fields; track field) {
-                  <div>
-                    <label class="block text-xs text-slate-500 font-medium mb-1">{{ field }}</label>
-                    <input 
-                      type="text" 
-                      [(ngModel)]="measValues[field]" 
-                      placeholder="--"
-                      class="form-input w-full text-sm py-1.5 px-3 font-mono"
-                    />
-                  </div>
-                }
-              </div>
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-sm text-slate-900">{{ meas.customerName }}</span>
+              <span class="text-xs text-slate-500 font-mono">({{ meas.mobileNumber }})</span>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-800">
+                {{ meas.style ? meas.style + ' ' + meas.clothingTypeName : meas.clothingTypeName }}
+              </span>
             </div>
+            <p class="text-xs text-slate-600 font-mono mt-1">
+              @for (fv of meas.values | keyvalue; track fv.key) {
+              <span class="mr-2">{{ fv.key }}: {{ fv.value }}</span>
+              }
+            </p>
+          </div>
+          <button (click)="addMeasurementFromPicker(meas)"
+            class="btn-primary text-xs py-1.5 px-3 whitespace-nowrap shrink-0">
+            <i class='bx bx-plus text-sm mr-1'></i> Add
+          </button>
+        </div>
+        } @empty {
+        <div class="p-8 text-center text-slate-400 text-sm">
+          No measurements found matching search criteria. Switch to "Record New" tab to enter custom dimensions.
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- TAB 2: RECORD NEW DIMENSIONS -->
+    @if (activeModalTab() === 'new') {
+    <div class="p-6 space-y-4 flex-1 overflow-y-auto min-h-0">
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Clothing
+          Category</label>
+        <select [ngModel]="selectedType()?.id" (ngModelChange)="onTypeChange($event)"
+          class="form-select w-full text-sm py-2 px-3.5" [disabled]="!!editingMeasurementId()">
+          @for (type of clothingTypes(); track type.id) {
+          <option [value]="type.id">{{ type.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Style Type
+          (optional)</label>
+        <select [(ngModel)]="modalStyle" class="form-select w-full text-sm py-2 px-3.5">
+          <option value="">-- No Style --</option>
+          @for (st of selectedType()?.styles; track st) {
+          <option [value]="st">{{ st }}</option>
+          }
+        </select>
+      </div>
+
+      @if (selectedType(); as type) {
+      <div class="space-y-3 pt-2">
+        <h4 class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Dimension Inputs (inches)</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          @for (field of type.fields; track field) {
+          <div>
+            <label class="block text-xs text-slate-500 font-medium mb-1">{{ field }}</label>
+            <input type="text" [(ngModel)]="measValues[field]" placeholder="--"
+              class="form-input w-full text-sm py-1.5 px-3 font-mono" />
+          </div>
           }
         </div>
-
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3 shrink-0">
-          <button (click)="cancelMeasurementModal()" class="btn-light text-xs py-1.5 px-3">Cancel</button>
-          <button (click)="saveMeasurement()" class="btn-primary text-xs py-1.5 px-4">Save & Add to Invoice</button>
-        </div>
+      </div>
       }
     </div>
+
+    <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end space-x-3 shrink-0">
+      <button (click)="cancelMeasurementModal()" class="btn-light text-xs py-1.5 px-3">Cancel</button>
+      <button (click)="saveMeasurement()" class="btn-primary text-xs py-1.5 px-4">Save & Add to Invoice</button>
+    </div>
+    }
   </div>
+</div>
 }

@@ -1,0 +1,64 @@
+<div class="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-700/80 shadow-2xl p-8 space-y-6">
+
+    <!-- Header Logo & Title -->
+    <div class="text-center space-y-2">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 text-white shadow-lg shadow-indigo-500/30 mb-2">
+        <i class='bx bx-user-plus text-2xl'></i>
+      </div>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Create Account</h1>
+      <p class="text-xs text-slate-400">Join Royal Tailor Shop Management Platform</p>
+    </div>
+
+    <!-- Error Alert -->
+    @if (errorMessage()) {
+      <div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+        <i class='bx bx-error-circle text-base shrink-0'></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Form -->
+    <form (ngSubmit)="onSubmit()" class="space-y-4">
+      <div>
+        <label for="fullName" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Full Name *</label>
+        <input type="text" id="fullName" [(ngModel)]="fullName" name="fullName" required placeholder="Enter your full name"
+          class="w-full bg-slate-900/80 border border-slate-700 text-white rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
+      </div>
+
+      <div>
+        <label for="signupEmail" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Email Address *</label>
+        <input type="email" id="signupEmail" [(ngModel)]="email" name="email" required placeholder="name@domain.com"
+          class="w-full bg-slate-900/80 border border-slate-700 text-white rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
+      </div>
+
+      <div>
+        <label for="signupMobile" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Mobile Number</label>
+        <input type="text" id="signupMobile" [(ngModel)]="mobileNumber" name="mobileNumber" placeholder="Enter mobile number"
+          class="w-full bg-slate-900/80 border border-slate-700 text-white rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
+      </div>
+
+      <div>
+        <label for="signupPassword" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Password *</label>
+        <input type="password" id="signupPassword" [(ngModel)]="password" name="password" required placeholder="Create a strong password"
+          class="w-full bg-slate-900/80 border border-slate-700 text-white rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" />
+      </div>
+
+      <button type="submit" [disabled]="isLoading()"
+        class="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold rounded-lg text-sm shadow-lg shadow-indigo-600/30 transition-all flex justify-center items-center gap-2">
+        @if (isLoading()) {
+          <i class='bx bx-loader-alt animate-spin text-lg'></i> Creating Account...
+        } @else {
+          Create Account <i class='bx bx-right-arrow-alt text-lg'></i>
+        }
+      </button>
+    </form>
+
+    <!-- Footer links -->
+    <div class="pt-4 border-t border-slate-700/60 text-center text-xs text-slate-400">
+      Already have an account?
+      <a routerLink="/login" class="text-indigo-400 hover:text-indigo-300 font-semibold ml-1">Sign In</a>
+    </div>
+
+  </div>
+</div>

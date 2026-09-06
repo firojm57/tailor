@@ -195,4 +195,13 @@ export class ClothingTypesComponent {
       this.isCreating.set(false);
     }
   }
+
+  @HostListener('document:keydown.escape')
+  handleKeydownEscape(): void {
+    if (this.deleteTarget()) {
+      this.cancelDelete();
+    } else if (this.isCreating() || this.isEditing()) {
+      this.cancel();
+    }
+  }
 }

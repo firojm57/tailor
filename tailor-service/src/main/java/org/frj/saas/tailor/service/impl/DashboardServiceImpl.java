@@ -6,6 +6,8 @@ import org.frj.saas.tailor.dto.DashboardStatsDto;
 import org.frj.saas.tailor.dto.MeasurementDto;
 import org.frj.saas.tailor.dto.bill.BillDto;
 import org.frj.saas.tailor.service.DashboardService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -14,6 +16,8 @@ import java.util.Set;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
+
+    private static final Logger log = LoggerFactory.getLogger(DashboardServiceImpl.class);
 
     private final BillDao billDao;
     private final MeasurementDao measurementDao;
@@ -25,6 +29,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardStatsDto getStats() {
+        log.debug("DashboardService: Computing system-wide dashboard metrics");
         List<BillDto> bills = billDao.findAll();
         List<MeasurementDto> measurements = measurementDao.findAll();
 
@@ -44,6 +49,9 @@ public class DashboardServiceImpl implements DashboardService {
                 .filter(b -> Boolean.TRUE.equals(b.getPaid()))
                 .mapToDouble(b -> b.getGrandTotal() != null ? b.getGrandTotal() : 0.0)
                 .sum();
+
+        log.info("DashboardService: Metrics computed - Customers: {}, Earnings: ₹{}, Measurements: {}, Bills: {}",
+                uniqueMobiles.size(), totalEarnings, measurements.size(), bills.size());
 
         return new DashboardStatsDto(
                 uniqueMobiles.size(),

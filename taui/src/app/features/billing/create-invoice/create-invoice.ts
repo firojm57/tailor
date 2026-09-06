@@ -1,9 +1,9 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { StorageService } from '../../../core/services/storage.service';
-import { CustomerMeasurement, ClothingType } from '../../../core/models/models';
+import { CustomerMeasurement, ClothingType, InvoiceDraft } from '../../../core/models/models';
 
 export interface SelectedInvoiceItem {
   measurementId?: string;
@@ -26,7 +26,9 @@ export interface SelectedInvoiceItem {
 export class CreateInvoiceComponent {
   private readonly storageService = inject(StorageService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
+  readonly currentDraftId = signal<string | null>(null);
   readonly clothingTypes = this.storageService.clothingTypes;
   readonly allMeasurements = this.storageService.measurements;
   readonly allBills = this.storageService.bills;
@@ -40,13 +42,89 @@ export class CreateInvoiceComponent {
   billDate = new Date().toISOString().split('T')[0];
   dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   notes = '';
-  discount = 0;
+  readonly discountSignal = signal<number>(0);
+  get discount(): number { return this.discountSignal(); }
+  set discount(val: number) { this.discountSignal.set(Number(val) || 0); }
 
   // Mobile suggestion state
   showMobileSuggestions = false;
 
   // Invoice Items state
   items = signal<SelectedInvoiceItem[]>([]);
+
+  constructor() {
+    // Check if URL contains draftId query parameter
+    const draftIdParam = this.route.snapshot.queryParamMap.get('draftId');
+    if (draftIdParam) {
+      this.currentDraftId.set(draftIdParam);
+      this.restoreDraft(draftIdParam);
+    }
+
+    effect(() => {
+      // Subscribe to signals to trigger saveDraft automatically on changes
+      const itemsList = this.items();
+      const mobile = this.mobileNumberSignal();
+      const disc = this.discountSignal();
+      this.saveDraft();
+    });
+  }
+
+  saveDraft(): void {
+    const hasData = this.customerName.trim() || this.mobileNumber.trim() || this.notes.trim() || this.items().length > 0;
+    if (!hasData) return;
+
+    const draftPayload: InvoiceDraft = {
+      id: this.currentDraftId() || undefined,
+      customerName: this.customerName,
+      mobileNumber: this.mobileNumber,
+      dueDate: this.dueDate,
+      notes: this.notes,
+      discount: Number(this.discount) || 0,
+      itemsJson: JSON.stringify(this.items())
+    };
+
+    this.storageService.saveDraft(draftPayload).subscribe(savedDraft => {
+      if (savedDraft && savedDraft.id && savedDraft.id !== this.currentDraftId()) {
+        this.currentDraftId.set(savedDraft.id);
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { draftId: savedDraft.id },
+          queryParamsHandling: 'merge',
+          replaceUrl: true
+        });
+      }
+    });
+  }
+
+  private restoreDraft(draftId: string): void {
+    this.storageService.getDraft(draftId).subscribe(draft => {
+      if (draft) {
+        if (draft.customerName) this.customerName = draft.customerName;
+        if (draft.mobileNumber) this.mobileNumber = draft.mobileNumber;
+        if (draft.dueDate) this.dueDate = draft.dueDate;
+        if (draft.notes) this.notes = draft.notes;
+        if (typeof draft.discount === 'number') this.discount = draft.discount;
+        if (draft.itemsJson) {
+          try {
+            const parsedItems = JSON.parse(draft.itemsJson);
+            if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+              this.items.set(parsedItems);
+            }
+          } catch (e) {
+            // Ignore JSON parse error
+          }
+        }
+      }
+    });
+  }
+
+  clearDraft(): void {
+    const id = this.currentDraftId();
+    if (id) {
+      this.storageService.deleteDraft(id).subscribe();
+      this.currentDraftId.set(null);
+    }
+  }
 
   // Measurement Modal (Picker + Recorder)
   isMeasurementModalOpen = signal<boolean>(false);
@@ -86,7 +164,7 @@ export class CreateInvoiceComponent {
   });
 
   readonly grandTotal = computed(() => {
-    const total = this.subtotal() - (Number(this.discount) || 0);
+    const total = this.subtotal() - (Number(this.discountSignal()) || 0);
     return total < 0 ? 0 : total;
   });
 
@@ -252,7 +330,24 @@ export class CreateInvoiceComponent {
         values: this.measValues,
         style: this.modalStyle.trim() || undefined
       }).subscribe({
-        next: () => {
+        next: (updatedMeas) => {
+          const dimensionsStr = Object.entries(updatedMeas.values || {})
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(', ');
+
+          this.items.update(curr => curr.map(item => {
+            if (item.measurementId === updatedMeas.id) {
+              return {
+                ...item,
+                clothingTypeId: updatedMeas.clothingTypeId,
+                clothingTypeName: updatedMeas.clothingTypeName,
+                keyDimensions: dimensionsStr || 'Custom Dimensions',
+                description: updatedMeas.style ? `${this.capitalize(updatedMeas.style)} ${this.capitalize(updatedMeas.clothingTypeName)}` : this.capitalize(updatedMeas.clothingTypeName)
+              };
+            }
+            return item;
+          }));
+
           this.loadCustomerMeasurements(this.mobileNumber.trim());
         }
       });
@@ -266,7 +361,27 @@ export class CreateInvoiceComponent {
         values: this.measValues,
         style: this.modalStyle.trim() || undefined
       }).subscribe({
-        next: () => {
+        next: (savedMeas) => {
+          const dimensionsStr = Object.entries(savedMeas.values || {})
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(', ');
+
+          const newItem: SelectedInvoiceItem = {
+            measurementId: savedMeas.id,
+            clothingTypeId: savedMeas.clothingTypeId,
+            clothingTypeName: savedMeas.clothingTypeName,
+            keyDimensions: dimensionsStr || 'Custom Dimensions',
+            quantity: 1,
+            price: 500,
+            description: savedMeas.style ? `${this.capitalize(savedMeas.style)} ${this.capitalize(savedMeas.clothingTypeName)}` : this.capitalize(savedMeas.clothingTypeName),
+            selected: true
+          };
+
+          this.items.update(curr => {
+            if (curr.some(i => i.measurementId === savedMeas.id)) return curr;
+            return [...curr, newItem];
+          });
+
           this.loadCustomerMeasurements(this.mobileNumber.trim());
         }
       });
@@ -319,6 +434,7 @@ export class CreateInvoiceComponent {
       items: billItems
     }).subscribe({
       next: () => {
+        this.clearDraft();
         this.router.navigate(['/billing']);
       }
     });
@@ -329,6 +445,13 @@ export class CreateInvoiceComponent {
     const target = event.target as HTMLElement;
     if (!target.closest('.mobile-autocomplete-container')) {
       this.showMobileSuggestions = false;
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  handleKeydownEscape(): void {
+    if (this.isMeasurementModalOpen()) {
+      this.cancelMeasurementModal();
     }
   }
 }

@@ -47,3 +47,31 @@ export interface DashboardStats {
   totalMeasurements: number;
   totalBills: number;
 }
+
+export interface InvoiceDraft {
+  id?: string;
+  customerName: string;
+  mobileNumber: string;
+  dueDate: string;
+  notes?: string;
+  discount: number;
+  itemsJson: string;
+  updatedAt?: string;
+}
+
+export interface User {
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+
