@@ -2,6 +2,7 @@ export interface ClothingType {
   id: string;
   name: string;
   fields: string[]; // List of measurement fields (e.g. Length, Sleeve Length, Chest, Waist, Inseam)
+  styles: string[]; // List of styles configured for this type (e.g. Formal, Casual)
 }
 
 export interface CustomerMeasurement {
@@ -13,6 +14,7 @@ export interface CustomerMeasurement {
   clothingTypeId: string;
   clothingTypeName: string;
   values: Record<string, string>; // e.g. { "Length": "40", "Chest": "38" }
+  style?: string; // e.g. "Formal", "Casual", "Sports", etc.
 }
 
 export interface BillItem {
@@ -45,3 +47,31 @@ export interface DashboardStats {
   totalMeasurements: number;
   totalBills: number;
 }
+
+export interface InvoiceDraft {
+  id?: string;
+  customerName: string;
+  mobileNumber: string;
+  dueDate: string;
+  notes?: string;
+  discount: number;
+  itemsJson: string;
+  updatedAt?: string;
+}
+
+export interface User {
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+}
+
+

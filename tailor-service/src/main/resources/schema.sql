@@ -1,32 +1,35 @@
-drop table if exists billing_items;
-drop table if exists billing;
-drop table if exists measurements;
-drop table if exists customer;
-drop table if exists varieties;
-drop table if exists users;
-
-create table users (
+create table if not exists users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT NOT NULL UNIQUE,
-    email TEXT,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    mobile_number TEXT,
+    role TEXT DEFAULT 'ROLE_TAILOR',
+    reset_token TEXT,
+    reset_token_expiry TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
-create table varieties (
+create table if not exists draft_invoices (
+    id TEXT PRIMARY KEY,
+    customer_name TEXT,
+    mobile_number TEXT,
+    due_date TEXT,
+    notes TEXT,
+    discount REAL DEFAULT 0.0,
+    items_json TEXT,
+    updated_at TEXT
+);
+
+create table if not exists varieties (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL UNIQUE,
-    measure_list TEXT NOT NULL
+    measure_list TEXT NOT NULL,
+    style_list TEXT
 );
 
-create table customer (
-    cust_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    address TEXT,
-    mobile TEXT NOT NULL
-);
 
-create table measurements (
+create table if not exists measurements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_name TEXT NOT NULL,
     mobile_number TEXT NOT NULL,
@@ -34,10 +37,11 @@ create table measurements (
     delivery_date TEXT,
     clothing_type_id INTEGER,
     clothing_type_name TEXT NOT NULL,
-    measurement_values TEXT NOT NULL
+    measurement_values TEXT NOT NULL,
+    style TEXT
 );
 
-create table billing (
+create table if not exists billing (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bill_number TEXT UNIQUE NOT NULL,
     customer_name TEXT NOT NULL,
@@ -51,7 +55,7 @@ create table billing (
     notes TEXT
 );
 
-create table billing_items (
+create table if not exists billing_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bill_id INTEGER REFERENCES billing(id) ON DELETE CASCADE,
     clothing_type_id INTEGER,

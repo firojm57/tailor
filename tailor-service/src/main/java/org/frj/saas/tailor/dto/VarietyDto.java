@@ -19,11 +19,21 @@ public class VarietyDto {
     @Convert(converter = StringListConverter.class)
     private List<String> measureList;
 
+    @Column(name = "style_list")
+    @Convert(converter = StringListConverter.class)
+    private List<String> styleList;
+
     public VarietyDto() {}
 
     public VarietyDto(String type, List<String> measureList) {
         this.type = type;
         this.measureList = measureList;
+    }
+
+    public VarietyDto(String type, List<String> measureList, List<String> styleList) {
+        this.type = type;
+        this.measureList = measureList;
+        this.styleList = styleList;
     }
 
     public Long getId() { return id; }
@@ -34,4 +44,7 @@ public class VarietyDto {
 
     public List<String> getMeasureList() { return measureList; }
     public void setMeasureList(List<String> measureList) { this.measureList = measureList; }
+
+    public List<String> getStyleList() { return styleList; }
+    public void setStyleList(List<String> styleList) { this.styleList = styleList; }
 }

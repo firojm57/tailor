@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StorageService } from '../../core/services/storage.service';
@@ -18,6 +18,14 @@ export class MeasurementsComponent {
   readonly measurements = this.storageService.measurements;
   readonly clothingTypes = this.storageService.clothingTypes;
 
+  // Pagination Signals
+  readonly page = signal<number>(0);
+  readonly size = signal<number>(10);
+  readonly totalElements = signal<number>(0);
+  readonly totalPages = signal<number>(0);
+  readonly isLastPage = signal<boolean>(true);
+  readonly pagedMeasurements = signal<CustomerMeasurement[]>([]);
+
   // Search & Filters
   readonly searchTerm = signal<string>('');
   readonly typeFilter = signal<string>('');
@@ -32,8 +40,15 @@ export class MeasurementsComponent {
   formMobileNumber = '';
   formDate = '';
   formDeliveryDate = '';
+  formStyle = '';
   readonly formClothingTypeId = signal<string>('');
   formValues: Record<string, string> = {};
+
+  private searchDebounceTimer: any;
+
+  readonly showingTo = computed(() => {
+    return Math.min((this.page() + 1) * this.size(), this.totalElements());
+  });
 
   @HostListener('document:keydown.escape')
   handleEscapeKey(): void {
@@ -44,28 +59,69 @@ export class MeasurementsComponent {
     }
   }
 
-  // Computed filtered list
-  readonly filteredMeasurements = computed(() => {
-    const list = this.measurements();
-    const search = this.searchTerm().trim().toLowerCase();
-    const typeId = this.typeFilter();
-
-    return list.filter(m => {
-      const matchSearch = !search ||
-        m.customerName.toLowerCase().includes(search) ||
-        m.mobileNumber.includes(search);
-      const matchType = !typeId || m.clothingTypeId === typeId;
-      return matchSearch && matchType;
-    });
-  });
-
   // Computed selected clothing type for form
   readonly selectedFormClothingType = computed<ClothingType | null>(() => {
     const typeId = this.formClothingTypeId();
     return this.clothingTypes().find(t => t.id === typeId) || null;
   });
 
-  constructor() {}
+  constructor() {
+    // Reload page whenever page, search term, or type filter changes
+    effect(() => {
+      this.page();
+      this.searchTerm();
+      this.typeFilter();
+      this.loadPagedData();
+    });
+  }
+
+  loadPagedData(): void {
+    this.storageService.getMeasurementsPage(
+      this.page(),
+      this.size(),
+      this.searchTerm(),
+      this.typeFilter()
+    ).subscribe({
+      next: (res) => {
+        if (this.page() >= res.totalPages && res.totalPages > 0) {
+          this.page.set(0);
+          return;
+        }
+
+        this.pagedMeasurements.set(res.content);
+        this.totalElements.set(res.totalElements);
+        this.totalPages.set(res.totalPages);
+        this.isLastPage.set(res.last);
+      }
+    });
+  }
+
+  onSearchInput(value: string): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.page.set(0);
+      this.searchTerm.set(value);
+    }, 300);
+  }
+
+  onTypeFilterChange(typeId: string): void {
+    this.page.set(0);
+    this.typeFilter.set(typeId);
+  }
+
+  prevPage(): void {
+    if (this.page() > 0) {
+      this.page.update(p => p - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (!this.isLastPage()) {
+      this.page.update(p => p + 1);
+    }
+  }
 
   selectMeasurement(m: CustomerMeasurement): void {
     this.selectedMeasurement.set(m);
@@ -80,15 +136,14 @@ export class MeasurementsComponent {
 
     this.formCustomerName = '';
     this.formMobileNumber = '';
+    this.formStyle = '';
     const today = new Date().toISOString().split('T')[0];
     this.formDate = today;
 
-    // Default expected delivery date to 7 days from today
     const delivery = new Date();
     delivery.setDate(delivery.getDate() + 7);
     this.formDeliveryDate = delivery.toISOString().split('T')[0];
 
-    // Default to first type if available
     const types = this.clothingTypes();
     const defaultTypeId = types.length > 0 ? types[0].id : '';
     this.formClothingTypeId.set(defaultTypeId);
@@ -109,21 +164,18 @@ export class MeasurementsComponent {
     this.formMobileNumber = m.mobileNumber;
     this.formDate = m.date;
     this.formDeliveryDate = m.deliveryDate || '';
+    this.formStyle = m.style || '';
     this.formClothingTypeId.set(m.clothingTypeId);
     this.formValues = { ...m.values };
   }
 
-  // Pre-fill measurements if there's a history for this mobile number
   onMobileNumberChange(): void {
     const mobile = this.formMobileNumber.trim();
     if (mobile.length >= 10 && this.isCreating()) {
-      // Find latest measurement for this mobile
       const history = this.measurements().filter(m => m.mobileNumber === mobile);
       if (history.length > 0) {
-        // Auto-fill customer name from latest record
         this.formCustomerName = history[0].customerName;
 
-        // Optionally, if we find a record of the CURRENT clothing type, pre-fill values
         const typeHistory = history.find(m => m.clothingTypeId === this.formClothingTypeId());
         if (typeHistory) {
           this.formValues = { ...typeHistory.values };
@@ -135,7 +187,6 @@ export class MeasurementsComponent {
   onTypeChange(typeId: string): void {
     this.formClothingTypeId.set(typeId);
 
-    // Reinitialize values for select template
     const selectedType = this.clothingTypes().find(t => t.id === typeId);
     if (selectedType) {
       const newValues: Record<string, string> = {};
@@ -165,7 +216,7 @@ export class MeasurementsComponent {
     const typeId = this.formClothingTypeId();
 
     if (!name || !mobile || !date || !typeId) {
-      alert('Please fill out all required fields.');
+      this.storageService.showToast('Please fill out all required fields.', 'danger');
       return;
     }
 
@@ -179,18 +230,30 @@ export class MeasurementsComponent {
       deliveryDate: deliveryDate || undefined,
       clothingTypeId: typeId,
       clothingTypeName: selectedType.name,
-      values: this.formValues
+      values: this.formValues,
+      style: this.formStyle.trim() || undefined
     };
 
     if (this.isCreating()) {
-      const newM = this.storageService.addMeasurement(measurementData);
-      this.selectMeasurement(newM);
+      this.storageService.addMeasurement(measurementData).subscribe({
+        next: () => {
+          this.page.set(0);
+          this.loadPagedData();
+        }
+      });
     } else if (this.isEditing()) {
       const m = this.selectedMeasurement();
       if (!m) return;
-      this.storageService.updateMeasurement(m.id, measurementData);
-      const updated = this.measurements().find(x => x.id === m.id) || null;
-      this.selectedMeasurement.set(updated);
+      this.storageService.updateMeasurement(m.id, measurementData).subscribe({
+        next: () => {
+          this.loadPagedData();
+          // Update details drawer immediately with new fields
+          this.selectedMeasurement.set({
+            ...m,
+            ...measurementData
+          });
+        }
+      });
     }
 
     this.isCreating.set(false);
@@ -216,18 +279,20 @@ export class MeasurementsComponent {
   executeDelete(): void {
     const target = this.deleteTarget();
     if (target) {
-      this.storageService.deleteMeasurement(target.id);
+      this.storageService.deleteMeasurement(target.id).subscribe({
+        next: () => {
+          this.loadPagedData();
+        }
+      });
       this.deleteTarget.set(null);
       this.selectedMeasurement.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);
-      if (this.measurements().length > 0) {
-        this.selectedMeasurement.set(this.measurements()[0]);
-      }
     }
   }
 
   formatDate(dateStr: string): string {
+    if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', {
       day: '2-digit',
@@ -236,8 +301,16 @@ export class MeasurementsComponent {
     });
   }
 
-  // Get keys of record for iterations
   getFieldsList(values: Record<string, string>): { key: string, value: string }[] {
-    return Object.entries(values).map(([key, value]) => ({ key, value }));
+    return Object.entries(values || {}).map(([key, value]) => ({ key, value }));
+  }
+
+  @HostListener('document:keydown.escape')
+  handleKeydownEscape(): void {
+    if (this.deleteTarget()) {
+      this.cancelDelete();
+    } else if (this.isCreating() || this.isEditing() || this.selectedMeasurement()) {
+      this.cancel();
+    }
   }
 }

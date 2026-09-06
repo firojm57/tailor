@@ -4,12 +4,16 @@ import org.frj.saas.tailor.dao.BillDao;
 import org.frj.saas.tailor.dao.MeasurementDao;
 import org.frj.saas.tailor.dto.CustomerSuggestionDto;
 import org.frj.saas.tailor.service.CustomerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomerServiceImpl.class);
 
     private final MeasurementDao measurementDao;
     private final BillDao billDao;
@@ -26,6 +30,8 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         String q = query.trim().toLowerCase();
+        log.debug("CustomerService: Searching customer suggestions for query '{}'", q);
+
         Map<String, String> map = new LinkedHashMap<>();
 
         measurementDao.findAllByOrderByIdDesc().forEach(m -> {
@@ -44,6 +50,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         List<CustomerSuggestionDto> result = new ArrayList<>();
         map.forEach((mobile, name) -> result.add(new CustomerSuggestionDto(mobile, name)));
+        log.debug("CustomerService: Found {} customer suggestions for query '{}'", result.size(), q);
         return result;
     }
 }

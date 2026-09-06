@@ -35,6 +35,8 @@ export class ClothingTypesComponent {
   typeName = '';
   fields: string[] = [];
   newFieldText = '';
+  styles: string[] = [];
+  newStyleText = '';
 
   @HostListener('document:keydown.escape')
   handleEscapeKey(): void {
@@ -58,6 +60,8 @@ export class ClothingTypesComponent {
     this.typeName = '';
     this.fields = ['Length']; // start with a default field
     this.newFieldText = '';
+    this.styles = ['Formal', 'Casual']; // default starting styles
+    this.newStyleText = '';
   }
 
   startEdit(): void {
@@ -69,13 +73,15 @@ export class ClothingTypesComponent {
     this.typeName = type.name;
     this.fields = [...type.fields];
     this.newFieldText = '';
+    this.styles = [...(type.styles || [])];
+    this.newStyleText = '';
   }
 
   addField(): void {
     const text = this.newFieldText.trim();
     if (!text) return;
     if (this.fields.some(f => f.toLowerCase() === text.toLowerCase())) {
-      alert('Field already exists.');
+      this.storageService.showToast('Field already exists.', 'danger');
       return;
     }
     this.fields.push(text);
@@ -84,21 +90,36 @@ export class ClothingTypesComponent {
 
   removeField(index: number): void {
     if (this.fields.length <= 1) {
-      alert('A clothing type must have at least one measurement field.');
+      this.storageService.showToast('A clothing type must have at least one measurement field.', 'danger');
       return;
     }
     this.fields.splice(index, 1);
   }
 
+  addStyle(): void {
+    const text = this.newStyleText.trim();
+    if (!text) return;
+    if (this.styles.some(s => s.toLowerCase() === text.toLowerCase())) {
+      this.storageService.showToast('Style already exists.', 'danger');
+      return;
+    }
+    this.styles.push(text);
+    this.newStyleText = '';
+  }
+
+  removeStyle(index: number): void {
+    this.styles.splice(index, 1);
+  }
+
   save(): void {
     const name = this.typeName.trim();
     if (!name) {
-      alert('Please enter a clothing type name.');
+      this.storageService.showToast('Please enter a clothing type name.', 'danger');
       return;
     }
 
     if (this.fields.length === 0) {
-      alert('Please add at least one measurement field.');
+      this.storageService.showToast('Please add at least one measurement field.', 'danger');
       return;
     }
 
@@ -108,24 +129,34 @@ export class ClothingTypesComponent {
         t => t.name.toLowerCase() === name.toLowerCase()
       );
       if (duplicate) {
-        alert('A clothing type with this name already exists.');
+        this.storageService.showToast('A clothing type with this name already exists.', 'danger');
         return;
       }
 
-      const newType = this.storageService.addClothingType(name, this.fields);
-      this.selectType(newType);
+      this.storageService.addClothingType(name, this.fields, this.styles).subscribe({
+        next: (newType) => {
+          this.selectType(newType);
+          this.isCreating.set(false);
+          this.isEditing.set(false);
+        }
+      });
     } else if (this.isEditing()) {
       const type = this.selectedType();
       if (!type) return;
 
-      this.storageService.updateClothingType(type.id, name, this.fields);
-      // Reload selected type
-      const updated = this.clothingTypes().find(t => t.id === type.id) || null;
-      this.selectedType.set(updated);
+      this.storageService.updateClothingType(type.id, name, this.fields, this.styles).subscribe({
+        next: () => {
+          this.selectedType.set({
+            ...type,
+            name,
+            fields: [...this.fields],
+            styles: [...this.styles]
+          });
+          this.isCreating.set(false);
+          this.isEditing.set(false);
+        }
+      });
     }
-
-    this.isCreating.set(false);
-    this.isEditing.set(false);
   }
 
   cancel(): void {
@@ -149,14 +180,28 @@ export class ClothingTypesComponent {
   executeDelete(): void {
     const target = this.deleteTarget();
     if (target) {
-      this.storageService.deleteClothingType(target.id);
+      this.storageService.deleteClothingType(target.id).subscribe({
+        next: () => {
+          if (this.clothingTypes().length > 0) {
+            this.selectedType.set(this.clothingTypes()[0]);
+          } else {
+            this.selectedType.set(null);
+          }
+        }
+      });
       this.deleteTarget.set(null);
       this.selectedType.set(null);
       this.isEditing.set(false);
       this.isCreating.set(false);
-      if (this.clothingTypes().length > 0) {
-        this.selectedType.set(this.clothingTypes()[0]);
-      }
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  handleKeydownEscape(): void {
+    if (this.deleteTarget()) {
+      this.cancelDelete();
+    } else if (this.isCreating() || this.isEditing()) {
+      this.cancel();
     }
   }
 }

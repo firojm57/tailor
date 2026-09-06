@@ -1,95 +1,73 @@
+@if (!isAuthPage() && authService.isAuthenticated()) {
 <div class="h-screen w-screen flex flex-col md:flex-row overflow-hidden bg-slate-50 antialiased">
   <!-- Sidebar (hidden in print) -->
   <aside 
-    class="w-64 bg-[#082068] text-white flex-shrink-0 flex flex-col z-20 transition-all duration-300 md:translate-x-0 no-print h-full"
+    class="w-52 lg:w-56 bg-[#082068] text-white flex-shrink-0 flex flex-col z-20 transition-all duration-300 md:translate-x-0 no-print h-full"
     [ngClass]="isSidebarOpen() ? 'fixed inset-y-0 left-0 translate-x-0' : 'fixed md:relative -translate-x-full md:translate-x-0'"
   >
     <!-- Brand / Logo -->
-    <div class="h-16 flex items-center justify-between px-6 border-b border-[#ffffff10] shrink-0">
-      <div class="flex items-center space-x-2.5">
-        <i class='bx bxs-scissors text-[#3b82f6] text-xl'></i>
-        <span class="font-extrabold text-base tracking-wider text-white">ROYAL TAILOR</span>
+    <div class="h-13 flex items-center justify-between px-4 border-b border-[#ffffff10] shrink-0">
+      <div class="flex items-center space-x-2">
+        <i class='bx bxs-scissors text-[#3b82f6] text-lg'></i>
+        <span class="font-extrabold text-sm tracking-wider text-white">ROYAL TAILOR</span>
       </div>
       <!-- Mobile close button -->
       <button (click)="toggleSidebar()" class="md:hidden text-indigo-200 hover:text-white focus:outline-none flex items-center justify-center p-1">
-        <i class='bx bx-x text-2xl'></i>
+        <i class='bx bx-x text-xl'></i>
       </button>
     </div>
 
     <!-- Navigation Links -->
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto min-h-0">
-      <a 
-        routerLink="/dashboard" 
-        routerLinkActive="bg-[#1e3478] text-white shadow-xs" 
-        [routerLinkActiveOptions]="{exact: true}"
-        (click)="isSidebarOpen.set(false)"
-        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-      >
-        <i class='bx bx-grid-alt mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-        Dashboard
-      </a>
-
-      <a 
-        routerLink="/measurements" 
-        routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-        (click)="isSidebarOpen.set(false)"
-        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-      >
-        <i class='bx bx-ruler mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-        Measurements
-      </a>
-
-      <a 
-        routerLink="/clothing-types" 
-        routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-        (click)="isSidebarOpen.set(false)"
-        class="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-      >
-        <i class='bx bx-closet mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-        Clothing Types
-      </a>
-
-      <!-- Billing & Invoices Menu with Submenu -->
-      <div class="space-y-1">
-        <button 
-          (click)="toggleBillingSubmenu()"
-          class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
-        >
-          <div class="flex items-center">
-            <i class='bx bx-receipt mr-3 text-lg text-indigo-300 group-hover:text-white transition-colors'></i>
-            <span>Billing & Invoices</span>
-          </div>
-          <i class='bx bx-chevron-down text-indigo-300 transition-transform duration-200' [ngClass]="isBillingSubmenuOpen() ? 'rotate-180' : ''"></i>
-        </button>
-
-        @if (isBillingSubmenuOpen()) {
-          <div class="pl-9 space-y-1">
-            <a 
-              routerLink="/billing" 
-              [routerLinkActiveOptions]="{exact: true}"
-              routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-              (click)="isSidebarOpen.set(false)"
-              class="flex items-center px-3 py-2 text-xs font-medium rounded-md text-indigo-200 hover:bg-[#1e3478] hover:text-white transition-all"
+    <nav class="flex-1 px-2.5 py-3 space-y-1 overflow-y-auto min-h-0">
+      @for (item of navItems; track item.route) {
+        @if (!item.children) {
+          <a 
+            [routerLink]="item.route" 
+            routerLinkActive="bg-[#1e3478] text-white shadow-xs" 
+            [routerLinkActiveOptions]="{exact: !!item.exact}"
+            (click)="isSidebarOpen.set(false)"
+            class="flex items-center px-3 py-2 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
+          >
+            <i class="bx {{ item.icon }} mr-2.5 text-lg text-indigo-300 group-hover:text-white transition-colors"></i>
+            {{ item.label }}
+          </a>
+        } @else {
+          <!-- Submenu -->
+          <div class="space-y-1">
+            <button 
+              (click)="toggleBillingSubmenu()"
+              class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg text-indigo-100 hover:bg-[#1e3478] hover:text-white transition-all group"
             >
-              <i class='bx bx-list-ul mr-2 text-sm'></i>
-              Invoice Registry
-            </a>
-            <a 
-              routerLink="/billing/create" 
-              routerLinkActive="bg-[#1e3478] text-white shadow-xs"
-              (click)="isSidebarOpen.set(false)"
-              class="flex items-center px-3 py-2 text-xs font-medium rounded-md text-indigo-200 hover:bg-[#1e3478] hover:text-white transition-all"
-            >
-              <i class='bx bx-plus-circle mr-2 text-sm'></i>
-              Create Invoice
-            </a>
+              <div class="flex items-center">
+                <i class="bx {{ item.icon }} mr-2.5 text-lg text-indigo-300 group-hover:text-white transition-colors"></i>
+                <span>{{ item.label }}</span>
+              </div>
+              <i class="bx bx-chevron-down text-indigo-300 transition-transform duration-200" [ngClass]="isBillingSubmenuOpen() ? 'rotate-180' : ''"></i>
+            </button>
+
+            @if (isBillingSubmenuOpen()) {
+              <div class="pl-7 space-y-1">
+                @for (child of item.children; track child.route) {
+                  <a 
+                    [routerLink]="child.route" 
+                    [routerLinkActiveOptions]="{exact: !!child.exact}"
+                    routerLinkActive="bg-[#1e3478] text-white shadow-xs"
+                    (click)="isSidebarOpen.set(false)"
+                    class="flex items-center px-2.5 py-1.5 text-xs font-medium rounded-md text-indigo-200 hover:bg-[#1e3478] hover:text-white transition-all"
+                  >
+                    <i class="bx {{ child.icon }} mr-2 text-sm"></i>
+                    {{ child.label }}
+                  </a>
+                }
+              </div>
+            }
           </div>
         }
-      </div>
+      }
     </nav>
 
     <!-- Sidebar footer -->
-    <div class="p-4 border-t border-[#ffffff10] shrink-0 text-[10px] text-indigo-200 text-center uppercase tracking-wider font-semibold">
+    <div class="p-3 border-t border-[#ffffff10] shrink-0 text-[10px] text-indigo-200 text-center uppercase tracking-wider font-semibold">
       &copy; 2026 Royal Tailors
     </div>
   </aside>
@@ -105,18 +83,18 @@
   <!-- Main Content Area Wrapper -->
   <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
     <!-- Top Nav Bar (hidden in print) -->
-    <header class="h-16 shrink-0 bg-white border-b border-slate-100 flex items-center justify-between px-6 z-10 no-print gap-4">
+    <header class="h-13 shrink-0 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-5 z-10 no-print gap-4">
       <div class="flex items-center space-x-3">
         <!-- Mobile Sidebar Toggle -->
         <button 
           (click)="toggleSidebar()" 
           class="md:hidden text-slate-500 hover:text-slate-800 focus:outline-none p-1 flex items-center justify-center"
         >
-          <i class='bx bx-menu text-2xl'></i>
+          <i class='bx bx-menu text-xl'></i>
         </button>
         
         <!-- Header Active Menu Name -->
-        <h2 class="text-base md:text-lg font-extrabold text-[#082068] tracking-tight">
+        <h2 class="text-base font-extrabold text-[#082068] tracking-tight">
           {{ pageTitle() }}
         </h2>
       </div>
@@ -129,11 +107,11 @@
             class="flex items-center space-x-2 focus:outline-none group"
           >
             <div class="w-9 h-9 rounded-full bg-[#082068] text-white flex items-center justify-center font-bold text-sm shadow-xs border border-indigo-200 group-hover:border-indigo-400">
-              {{ tailorName.substring(0,2).toUpperCase() }}
+              {{ tailorName().substring(0,2).toUpperCase() }}
             </div>
             <div class="hidden sm:block text-left">
-              <span class="block text-xs font-semibold text-slate-700">{{ tailorName }}</span>
-              <span class="block text-[10px] text-slate-400 font-medium">{{ tailorRole }}</span>
+              <span class="block text-xs font-semibold text-slate-700">{{ tailorName() }}</span>
+              <span class="block text-[10px] text-slate-400 font-medium">{{ tailorRole() }}</span>
             </div>
             <i class='bx bx-chevron-down text-slate-400 group-hover:text-slate-600 transition-transform duration-200 text-lg' [ngClass]="isProfileDropdownOpen() ? 'rotate-180' : ''"></i>
           </button>
@@ -141,18 +119,13 @@
           <!-- Dropdown menu -->
           @if (isProfileDropdownOpen()) {
             <div 
-              (click)="isProfileDropdownOpen.set(false)" 
               class="absolute right-0 mt-2 w-52 bg-white border border-slate-100 rounded-lg shadow-lg py-1 z-30 transition-all"
             >
               <div class="px-4 py-2 border-b border-slate-100">
                 <span class="block text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Logged in as</span>
-                <span class="block text-xs font-semibold text-slate-700 truncate">ahmed&#64;royaltailor.com</span>
+                <span class="block text-xs font-semibold text-slate-700 truncate">{{ authService.currentUser()?.email || 'admin@royaltailor.com' }}</span>
               </div>
-              <button class="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center transition-colors">
-                <i class='bx bx-user-circle mr-2 text-base text-slate-400'></i>
-                Profile Settings
-              </button>
-              <button (click)="isProfileDropdownOpen.set(false)" class="w-full text-left px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center font-semibold transition-colors">
+              <button (click)="logout()" class="w-full text-left px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center font-semibold transition-colors">
                 <i class='bx bx-log-out mr-2 text-base text-rose-400'></i>
                 Log Out
               </button>
@@ -170,6 +143,9 @@
       >
         <i class='bx text-lg' [ngClass]="toast.type === 'danger' ? 'bx-error-alt text-rose-400' : 'bx-check-circle text-emerald-400'"></i>
         <span>{{ toast.text }}</span>
+        <button (click)="storageService.clearToast()" class="ml-2 text-slate-400 hover:text-white focus:outline-none flex items-center justify-center p-0.5" title="Dismiss">
+          <i class='bx bx-x text-base'></i>
+        </button>
       </div>
     }
 
@@ -179,3 +155,23 @@
     </main>
   </div>
 </div>
+} @else {
+  <!-- Standalone Unauthenticated Route (Login / Signup / Forgot Password) -->
+  <main class="h-screen w-screen overflow-y-auto bg-slate-900">
+    <!-- Floating Toast Notification Banner for Auth screens -->
+    @if (storageService.toastMessage(); as toast) {
+      <div 
+        class="fixed top-4 right-6 z-50 flex items-center space-x-3 px-4 py-3 rounded-lg shadow-xl border text-xs md:text-sm font-semibold transition-all duration-300 animate-slide-in"
+        [ngClass]="toast.type === 'danger' ? 'bg-rose-900 text-white border-rose-700' : 'bg-slate-900 text-white border-slate-700'"
+      >
+        <i class='bx text-lg' [ngClass]="toast.type === 'danger' ? 'bx-error-alt text-rose-400' : 'bx-check-circle text-emerald-400'"></i>
+        <span>{{ toast.text }}</span>
+        <button (click)="storageService.clearToast()" class="ml-2 text-slate-400 hover:text-white focus:outline-none flex items-center justify-center p-0.5" title="Dismiss">
+          <i class='bx bx-x text-base'></i>
+        </button>
+      </div>
+    }
+    <router-outlet></router-outlet>
+  </main>
+}
+

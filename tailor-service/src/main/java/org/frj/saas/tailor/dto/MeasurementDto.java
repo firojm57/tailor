@@ -34,6 +34,9 @@ public class MeasurementDto {
     @Convert(converter = StringMapConverter.class)
     private Map<String, String> values;
 
+    @Column(name = "style")
+    private String style;
+
     public MeasurementDto() {}
 
     public Long getId() { return id; }
@@ -59,4 +62,7 @@ public class MeasurementDto {
 
     public Map<String, String> getValues() { return values; }
     public void setValues(Map<String, String> values) { this.values = values; }
+
+    public String getStyle() { return style; }
+    public void setStyle(String style) { this.style = style; }
 }

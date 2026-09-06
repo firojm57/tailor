@@ -1,0 +1,34 @@
+# ── Build output ─────────────────────────────────────────────────────────────
+tailor-app/
+tailor-service/target/
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
+taui/node_modules/
+taui/dist/
+taui/.angular/
+
+# ── Database (runtime artifact, not source) ───────────────────────────────────
+tailor-service/tailor.db
+*.db
+*.db-shm
+*.db-wal
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── IDE / Editor ──────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+.DS_Store
+Thumbs.db
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+desktop.ini
+ehthumbs.db
+
+# ── Spring Boot ───────────────────────────────────────────────────────────────
+tailor-service/src/main/resources/static/

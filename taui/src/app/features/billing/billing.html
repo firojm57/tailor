@@ -9,7 +9,7 @@
       <input 
         type="text" 
         [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
+        (input)="onSearchInput($any($event.target).value)"
         placeholder="Search invoice #, customer, mobile..." 
         class="form-input form-input-search w-full pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-800 shadow-xs focus:border-[#082068]"
       />
@@ -23,15 +23,6 @@
 
   <!-- Full-Width Data Table Container -->
   <div class="bg-white rounded-xl shadow-xs border border-slate-200/80 flex-1 min-h-0 flex flex-col overflow-hidden">
-    <div class="px-6 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between shrink-0">
-      <div class="flex items-center space-x-2">
-        <h3 class="font-semibold text-xs text-slate-800 uppercase tracking-wider">Invoice Registry</h3>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200/80 text-slate-700">
-          {{ filteredBills().length }}
-        </span>
-      </div>
-    </div>
-
     <div class="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead class="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
@@ -47,7 +38,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100 text-sm">
-          @for (bill of filteredBills(); track bill.id) {
+          @for (bill of pagedBills(); track bill.id) {
             <tr 
               (click)="selectBill(bill)"
               class="hover:bg-slate-50/80 transition-colors cursor-pointer group"
@@ -74,20 +65,19 @@
               <td class="py-3.5 px-6 text-right font-semibold text-slate-900 font-mono text-sm">
                 {{ formatCurrency(bill.grandTotal) }}
               </td>
-              <td class="py-3.5 px-6 text-center">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                      [ngClass]="bill.paid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'">
+              <td class="py-3.5 px-6 text-center" (click)="$event.stopPropagation()">
+                <button 
+                  type="button"
+                  (click)="togglePaid(bill, $event)"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-xs"
+                  [ngClass]="bill.paid ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-rose-100 text-rose-800 hover:bg-rose-200'"
+                  [title]="bill.paid ? 'Click to mark as Unpaid' : 'Click to mark as Paid'"
+                >
+                  <i class='bx' [ngClass]="bill.paid ? 'bx-check-circle' : 'bx-time-five'"></i>
                   {{ bill.paid ? 'Paid' : 'Unpaid' }}
-                </span>
+                </button>
               </td>
               <td class="py-3.5 px-6 text-right space-x-2 whitespace-nowrap" (click)="$event.stopPropagation()">
-                <button 
-                  (click)="selectBill(bill)" 
-                  class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
-                  title="View Details"
-                >
-                  <i class='bx bx-show mr-1 text-sm'></i> View
-                </button>
                 <button 
                   (click)="confirmDelete(bill)" 
                   class="inline-flex items-center p-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
@@ -107,6 +97,32 @@
           }
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="px-6 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between shrink-0 text-xs">
+      <div class="text-slate-500">
+        Showing <span class="font-semibold text-slate-800">{{ totalElements() === 0 ? 0 : page() * size() + 1 }}</span> to 
+        <span class="font-semibold text-slate-800">{{ showingTo() }}</span> of 
+        <span class="font-semibold text-slate-800">{{ totalElements() }}</span> records
+      </div>
+      <div class="flex items-center space-x-2">
+        <button 
+          (click)="prevPage()" 
+          [disabled]="page() <= 0"
+          class="inline-flex items-center px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 transition-colors"
+        >
+          <i class='bx bx-chevron-left text-sm mr-0.5'></i> Prev
+        </button>
+        <span class="text-slate-500 font-medium">Page {{ page() + 1 }} of {{ totalPages() || 1 }}</span>
+        <button 
+          (click)="nextPage()" 
+          [disabled]="page() >= totalPages() - 1 || totalPages() <= 1"
+          class="inline-flex items-center px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-50 transition-colors"
+        >
+          Next <i class='bx bx-chevron-right text-sm ml-0.5'></i>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -133,6 +149,15 @@
               </div>
             </div>
             <div class="flex items-center space-x-2">
+              <button 
+                type="button"
+                (click)="togglePaid(bill)" 
+                class="px-3 py-1.5 text-xs font-semibold rounded-md flex items-center gap-1.5 transition-colors shadow-xs"
+                [ngClass]="bill.paid ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'"
+              >
+                <i class='bx' [ngClass]="bill.paid ? 'bx-undo' : 'bx-check-double'"></i>
+                {{ bill.paid ? 'Mark Unpaid' : 'Mark Paid' }}
+              </button>
               <button (click)="printInvoice()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md flex items-center transition-colors">
                 <i class='bx bx-printer mr-1 text-sm'></i> Print
               </button>
@@ -156,10 +181,16 @@
                 <div class="text-right">
                   <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">INVOICE</span>
                   <span class="font-mono font-extrabold text-slate-900 text-lg">{{ bill.billNumber }}</span>
-                  <span class="inline-block mt-1 px-2.5 py-0.5 text-xs font-semibold rounded-full"
-                        [ngClass]="bill.paid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' : 'bg-rose-50 text-rose-700 border border-rose-200/60'">
+                  <button 
+                    type="button"
+                    (click)="togglePaid(bill)"
+                    class="inline-flex items-center gap-1 mt-1 px-3 py-0.5 text-xs font-semibold rounded-full cursor-pointer transition-all hover:scale-105 active:scale-95 border"
+                    [ngClass]="bill.paid ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'"
+                    [title]="bill.paid ? 'Click to mark as Unpaid' : 'Click to mark as Paid'"
+                  >
+                    <i class='bx' [ngClass]="bill.paid ? 'bx-check-circle' : 'bx-time-five'"></i>
                     {{ bill.paid ? 'PAID' : 'UNPAID' }}
-                  </span>
+                  </button>
                 </div>
               </div>
 
@@ -177,13 +208,13 @@
 
               <!-- Item List -->
               <div>
-                <table class="w-full text-xs text-left">
+                <table class="w-full text-xs text-left table-fixed">
                   <thead>
                     <tr class="border-b border-slate-200 text-slate-400 uppercase tracking-wider font-semibold">
-                      <th class="pb-2">Description</th>
-                      <th class="pb-2 text-center">Qty</th>
-                      <th class="pb-2 text-right">Rate</th>
-                      <th class="pb-2 text-right">Amount</th>
+                      <th class="pb-2 text-left">Description</th>
+                      <th class="pb-2 text-center w-12">Qty</th>
+                      <th class="pb-2 text-right w-24">Rate</th>
+                      <th class="pb-2 text-right w-24">Amount</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -235,9 +266,20 @@
             <button (click)="confirmDelete(bill)" class="text-xs font-semibold text-rose-600 hover:text-rose-800 flex items-center px-3 py-2 rounded hover:bg-rose-50 transition-colors">
               <i class='bx bx-trash mr-1 text-base'></i> Delete Invoice
             </button>
-            <button (click)="cancel()" class="btn-light text-xs">
-              Close
-            </button>
+            <div class="flex items-center space-x-2">
+              <button 
+                type="button"
+                (click)="togglePaid(bill)"
+                class="px-4 py-2 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+                [ngClass]="bill.paid ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300' : 'bg-emerald-600 hover:bg-emerald-700 text-white'"
+              >
+                <i class='bx' [ngClass]="bill.paid ? 'bx-undo' : 'bx-check-double'"></i>
+                {{ bill.paid ? 'Mark as Unpaid' : 'Mark as Paid' }}
+              </button>
+              <button (click)="cancel()" class="btn-light text-xs">
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -428,6 +470,7 @@
           <h1 class="text-2xl font-black tracking-wide text-black m-0 uppercase">ROYAL TAILORS</h1>
           <p class="text-xs text-gray-600 mt-1">Premium Men's Outfitting & Custom Stitching</p>
           <p class="text-xs text-gray-500 mt-1">Date: {{ formatDate(bill.date) }}</p>
+          <p class="text-xs font-semibold text-gray-800 mt-0.5">Expected Delivery: {{ bill.dueDate ? formatDate(bill.dueDate) : 'Not Specified' }}</p>
         </div>
         <div class="text-right">
           <span class="text-xs font-bold text-gray-400 block uppercase">INVOICE</span>
@@ -450,13 +493,13 @@
       </div>
 
       <div class="mb-6">
-        <table class="w-full text-xs text-left">
+        <table class="w-full text-xs text-left table-fixed">
           <thead>
             <tr class="border-b border-gray-800 font-bold uppercase tracking-wider text-black">
-              <th class="pb-2">Description</th>
-              <th class="pb-2 text-center">Qty</th>
-              <th class="pb-2 text-right">Rate</th>
-              <th class="pb-2 text-right">Amount</th>
+              <th class="pb-2 text-left">Description</th>
+              <th class="pb-2 text-center w-12">Qty</th>
+              <th class="pb-2 text-right w-24">Rate</th>
+              <th class="pb-2 text-right w-24">Amount</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-300">
