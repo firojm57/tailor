@@ -363,6 +363,7 @@ export class CreateInvoiceComponent {
         style: this.modalStyle.trim() || undefined
       }).subscribe({
         next: (savedMeas) => {
+          if (!savedMeas) return;
           const dimensionsStr = Object.entries(savedMeas.values || {})
             .map(([k, v]) => `${k}: ${v}`)
             .join(', ');

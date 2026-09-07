@@ -1,6 +1,6 @@
 # Development Guidelines & Coding Standards
 
-This document establishes the design principles and coding practices that MUST be complied with at all times during the development of the Royal Tailor application.
+This document establishes the design principles and coding practices that MUST be complied with at all times during the development of the RN Tailor application.
 
 ---
 

@@ -55,6 +55,9 @@ export class AuthService {
     this.currentUserSignal.set(null);
     localStorage.removeItem('tailor_auth_token');
     localStorage.removeItem('tailor_user');
+    localStorage.removeItem('tailor_measurements');
+    localStorage.removeItem('tailor_bills');
+    localStorage.removeItem('tailor_clothing_types');
   }
 
   private handleAuthSuccess(res: AuthResponse): void {

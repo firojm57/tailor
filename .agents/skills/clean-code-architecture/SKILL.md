@@ -5,7 +5,7 @@ description: Comprehensive rules and guidelines for Clean Code, SOLID principles
 
 # Clean Code & Architectural Guidelines
 
-This skill defines mandatory architectural standards, design principles, and code hygiene practices for the Royal Tailor application (`taui` frontend and `tailor-service` backend).
+This skill defines mandatory architectural standards, design principles, and code hygiene practices for the RN Tailor application (`taui` frontend and `tailor-service` backend).
 
 ---
 

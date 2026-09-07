@@ -135,7 +135,9 @@ export class ClothingTypesComponent {
 
       this.storageService.addClothingType(name, this.fields, this.styles).subscribe({
         next: (newType) => {
-          this.selectType(newType);
+          if (newType) {
+            this.selectType(newType);
+          }
           this.isCreating.set(false);
           this.isEditing.set(false);
         }
