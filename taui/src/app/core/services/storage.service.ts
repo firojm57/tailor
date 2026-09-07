@@ -1,8 +1,17 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { ClothingType, CustomerMeasurement, Bill, DashboardStats, InvoiceDraft } from '../models/models';
+
+export interface PagedResult<T> {
+  content: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +22,7 @@ export class StorageService {
     ? 'http://localhost:8080/api'
     : '/api';
 
-  // Signals representing the state
+  // In-memory signals representing the application state (NO business data in localStorage)
   private readonly clothingTypesSignal = signal<ClothingType[]>([]);
   private readonly measurementsSignal = signal<CustomerMeasurement[]>([]);
   private readonly billsSignal = signal<Bill[]>([]);
@@ -42,12 +51,12 @@ export class StorageService {
     this.toastMessage.set(null);
   }
 
-  // Public readonly views of the signals
+  // Public readonly views of the in-memory signals
   readonly clothingTypes = this.clothingTypesSignal.asReadonly();
   readonly measurements = this.measurementsSignal.asReadonly();
   readonly bills = this.billsSignal.asReadonly();
 
-  // Computed signals
+  // Computed dashboard statistics
   readonly stats = computed<DashboardStats>(() => {
     const uniqueMobiles = new Set([
       ...this.measurementsSignal().map(m => m.mobileNumber),
@@ -66,13 +75,23 @@ export class StorageService {
   });
 
   constructor() {
-    this.loadLocalTypes();
-    this.loadLocalMeasurements();
-    this.loadLocalBills();
+    // Proactively clean up any stale legacy business data from localStorage
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('tailor_clothing_types');
+      localStorage.removeItem('tailor_measurements');
+      localStorage.removeItem('tailor_bills');
+    }
+
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tailor_auth_token') : null;
     if (token) {
       this.refreshData(true);
     }
+  }
+
+  clearAllData(): void {
+    this.clothingTypesSignal.set([]);
+    this.measurementsSignal.set([]);
+    this.billsSignal.set([]);
   }
 
   searchCustomerSuggestions(query: string): Observable<{ mobile: string; name: string }[]> {
@@ -80,21 +99,8 @@ export class StorageService {
     const q = query.trim().toLowerCase();
 
     return this.http.get<any[]>(`${this.apiUrl}/customers/search?query=${encodeURIComponent(q)}`).pipe(
-      map(data => data.map(item => ({ mobile: item.mobile, name: item.name }))),
-      catchError(() => {
-        const mapRes = new Map<string, string>();
-        for (const m of this.measurementsSignal()) {
-          if (m.mobileNumber.toLowerCase().includes(q) || m.customerName.toLowerCase().includes(q)) {
-            mapRes.set(m.mobileNumber, m.customerName);
-          }
-        }
-        for (const b of this.billsSignal()) {
-          if (b.mobileNumber.toLowerCase().includes(q) || b.customerName.toLowerCase().includes(q)) {
-            if (!mapRes.has(b.mobileNumber)) mapRes.set(b.mobileNumber, b.customerName);
-          }
-        }
-        return of(Array.from(mapRes.entries()).map(([mobile, name]) => ({ mobile, name })));
-      })
+      map(data => (data || []).map(item => ({ mobile: item.mobile, name: item.name }))),
+      catchError(() => of([]))
     );
   }
 
@@ -102,20 +108,19 @@ export class StorageService {
     // 1. Fetch varieties / clothing types
     this.http.get<any[]>(`${this.apiUrl}/varieties`).subscribe({
       next: (data) => {
-        const types: ClothingType[] = data.map(item => ({
+        const types: ClothingType[] = (data || []).map(item => ({
           id: String(item.id),
           name: item.type,
           fields: item.measureList || [],
           styles: item.styleList || []
         }));
         this.clothingTypesSignal.set(types);
-        localStorage.setItem('tailor_clothing_types', JSON.stringify(types));
       },
-      error: () => {
+      error: (err) => {
+        if (err?.status === 401) return;
         if (!silent) {
-          this.showToast('Unable to connect to server. Using offline categories.', 'danger');
+          this.showToast('Unable to fetch categories from server.', 'danger');
         }
-        this.loadLocalTypes();
       }
     });
 
@@ -134,13 +139,12 @@ export class StorageService {
           style: item.style
         }));
         this.measurementsSignal.set(meas);
-        localStorage.setItem('tailor_measurements', JSON.stringify(meas));
       },
-      error: () => {
+      error: (err) => {
+        if (err?.status === 401) return;
         if (!silent) {
-          this.showToast('Unable to connect to server. Using offline measurements.', 'danger');
+          this.showToast('Unable to fetch measurements from server.', 'danger');
         }
-        this.loadLocalMeasurements();
       }
     });
 
@@ -170,53 +174,36 @@ export class StorageService {
           }))
         }));
         this.billsSignal.set(bills);
-        localStorage.setItem('tailor_bills', JSON.stringify(bills));
       },
-      error: () => {
+      error: (err) => {
+        if (err?.status === 401) return;
         if (!silent) {
-          this.showToast('Unable to connect to server. Using offline invoices.', 'danger');
+          this.showToast('Unable to fetch invoices from server.', 'danger');
         }
-        this.loadLocalBills();
       }
     });
   }
 
-  // Fallback to local storage if API is offline
-  private loadLocalTypes(): void {
-    const types = localStorage.getItem('tailor_clothing_types');
-    if (types) this.clothingTypesSignal.set(JSON.parse(types));
-  }
-
-  private loadLocalMeasurements(): void {
-    const meas = localStorage.getItem('tailor_measurements');
-    if (meas) this.measurementsSignal.set(JSON.parse(meas));
-  }
-
-  private loadLocalBills(): void {
-    const bills = localStorage.getItem('tailor_bills');
-    if (bills) this.billsSignal.set(JSON.parse(bills));
-  }
-
   // --- Clothing Type CRUD ---
-  addClothingType(name: string, fields: string[], styles: string[]): Observable<ClothingType> {
+  addClothingType(name: string, fields: string[], styles: string[]): Observable<ClothingType | null> {
     const payload = { type: name, measureList: fields, styleList: styles };
-    const tempId = 'type-' + Date.now();
-    const newType: ClothingType = { id: tempId, name, fields, styles };
 
     return this.http.post<any>(`${this.apiUrl}/varieties`, payload).pipe(
       map((res) => {
-        if (res && res.id) newType.id = String(res.id);
+        const created: ClothingType = {
+          id: String(res.id),
+          name: res.type,
+          fields: res.measureList || fields,
+          styles: res.styleList || styles
+        };
         this.showToast(`Category "${name}" created successfully!`);
         this.refreshData();
-        return newType;
+        return created;
       }),
       catchError((err) => {
-        const updated = [...this.clothingTypesSignal(), newType];
-        this.clothingTypesSignal.set(updated);
-        localStorage.setItem('tailor_clothing_types', JSON.stringify(updated));
-        const msg = err?.error?.message || `API Error: Could not save category "${name}" on server. Saved locally.`;
+        const msg = err?.error?.error || err?.error?.message || `Failed to create category "${name}".`;
         this.showToast(msg, 'danger');
-        return of(newType);
+        return of(null);
       })
     );
   }
@@ -225,64 +212,37 @@ export class StorageService {
     const numericId = Number(id);
     const payload = { id: numericId, type: name, measureList: fields, styleList: styles };
 
-    if (!isNaN(numericId)) {
-      return this.http.put(`${this.apiUrl}/varieties/${numericId}`, payload).pipe(
-        tap(() => {
-          this.showToast(`Category "${name}" updated successfully!`);
-          this.refreshData();
-        }),
-        catchError((err) => {
-          this.updateLocalClothingType(id, name, fields, styles);
-          const msg = err?.error?.message || `API Error: Could not update category "${name}" on server. Updated locally.`;
-          this.showToast(msg, 'danger');
-          return of(null);
-        })
-      );
-    } else {
-      this.updateLocalClothingType(id, name, fields, styles);
-      return of(null);
-    }
-  }
-
-  private updateLocalClothingType(id: string, name: string, fields: string[], styles: string[]): void {
-    const updated = this.clothingTypesSignal().map(t =>
-      t.id === id ? { ...t, name, fields, styles } : t
+    return this.http.put(`${this.apiUrl}/varieties/${numericId}`, payload).pipe(
+      tap(() => {
+        this.showToast(`Category "${name}" updated successfully!`);
+        this.refreshData();
+      }),
+      catchError((err) => {
+        const msg = err?.error?.error || err?.error?.message || `Failed to update category "${name}".`;
+        this.showToast(msg, 'danger');
+        return of(null);
+      })
     );
-    this.clothingTypesSignal.set(updated);
-    localStorage.setItem('tailor_clothing_types', JSON.stringify(updated));
-    this.showToast(`Category "${name}" updated locally!`);
   }
 
   deleteClothingType(id: string): Observable<any> {
     const numericId = Number(id);
-    if (!isNaN(numericId)) {
-      return this.http.delete(`${this.apiUrl}/varieties/${numericId}`).pipe(
-        tap(() => {
-          this.showToast('Category deleted successfully!', 'danger');
-          this.refreshData();
-        }),
-        catchError((err) => {
-          this.deleteLocalClothingType(id);
-          const msg = err?.error?.message || 'API Error: Could not delete category on server. Deleted locally.';
-          this.showToast(msg, 'danger');
-          return of(null);
-        })
-      );
-    } else {
-      this.deleteLocalClothingType(id);
-      return of(null);
-    }
-  }
 
-  private deleteLocalClothingType(id: string): void {
-    const filtered = this.clothingTypesSignal().filter(t => t.id !== id);
-    this.clothingTypesSignal.set(filtered);
-    localStorage.setItem('tailor_clothing_types', JSON.stringify(filtered));
-    this.showToast('Category deleted locally!', 'danger');
+    return this.http.delete(`${this.apiUrl}/varieties/${numericId}`).pipe(
+      tap(() => {
+        this.showToast('Category deleted successfully!', 'danger');
+        this.refreshData();
+      }),
+      catchError((err) => {
+        const msg = err?.error?.error || err?.error?.message || 'Failed to delete category.';
+        this.showToast(msg, 'danger');
+        return of(null);
+      })
+    );
   }
 
   // --- Customer Measurement CRUD ---
-  addMeasurement(measurement: Omit<CustomerMeasurement, 'id'>): Observable<CustomerMeasurement> {
+  addMeasurement(measurement: Omit<CustomerMeasurement, 'id'>): Observable<CustomerMeasurement | null> {
     const payload = {
       customerName: measurement.customerName,
       mobileNumber: measurement.mobileNumber,
@@ -293,7 +253,6 @@ export class StorageService {
       values: measurement.values,
       style: measurement.style || null
     };
-    const newMeas: CustomerMeasurement = { ...measurement, id: 'm-' + Date.now() };
 
     return this.http.post<any>(`${this.apiUrl}/measurements`, payload).pipe(
       map(res => {
@@ -311,12 +270,9 @@ export class StorageService {
         };
       }),
       catchError((err) => {
-        const updated = [newMeas, ...this.measurementsSignal()];
-        this.measurementsSignal.set(updated);
-        localStorage.setItem('tailor_measurements', JSON.stringify(updated));
-        const msg = err?.error?.message || `API Error: Could not save measurement for "${measurement.customerName}" on server. Saved locally.`;
+        const msg = err?.error?.error || err?.error?.message || `Failed to save measurement for "${measurement.customerName}".`;
         this.showToast(msg, 'danger');
-        return of(newMeas);
+        return of(null);
       })
     );
   }
@@ -335,60 +291,33 @@ export class StorageService {
       style: measurement.style || null
     };
 
-    if (!isNaN(numericId)) {
-      return this.http.put(`${this.apiUrl}/measurements/${numericId}`, payload).pipe(
-        tap(() => {
-          this.showToast(`Measurement for "${measurement.customerName}" updated!`);
-          this.refreshData();
-        }),
-        catchError((err) => {
-          this.updateLocalMeasurement(id, measurement);
-          const msg = err?.error?.message || `API Error: Could not update measurement for "${measurement.customerName}" on server. Updated locally.`;
-          this.showToast(msg, 'danger');
-          return of(null);
-        })
-      );
-    } else {
-      this.updateLocalMeasurement(id, measurement);
-      return of(null);
-    }
-  }
-
-  private updateLocalMeasurement(id: string, measurement: Omit<CustomerMeasurement, 'id'>): void {
-    const updated = this.measurementsSignal().map(m =>
-      m.id === id ? { ...m, ...measurement } : m
+    return this.http.put(`${this.apiUrl}/measurements/${numericId}`, payload).pipe(
+      tap(() => {
+        this.showToast(`Measurement for "${measurement.customerName}" updated!`);
+        this.refreshData();
+      }),
+      catchError((err) => {
+        const msg = err?.error?.error || err?.error?.message || `Failed to update measurement for "${measurement.customerName}".`;
+        this.showToast(msg, 'danger');
+        return of(null);
+      })
     );
-    this.measurementsSignal.set(updated);
-    localStorage.setItem('tailor_measurements', JSON.stringify(updated));
-    this.showToast(`Measurement for "${measurement.customerName}" updated locally!`);
   }
 
   deleteMeasurement(id: string): Observable<any> {
     const numericId = Number(id);
-    if (!isNaN(numericId)) {
-      return this.http.delete(`${this.apiUrl}/measurements/${numericId}`).pipe(
-        tap(() => {
-          this.showToast('Measurement deleted successfully!', 'danger');
-          this.refreshData();
-        }),
-        catchError((err) => {
-          this.deleteLocalMeasurement(id);
-          const msg = err?.error?.message || 'API Error: Could not delete measurement on server. Deleted locally.';
-          this.showToast(msg, 'danger');
-          return of(null);
-        })
-      );
-    } else {
-      this.deleteLocalMeasurement(id);
-      return of(null);
-    }
-  }
 
-  private deleteLocalMeasurement(id: string): void {
-    const filtered = this.measurementsSignal().filter(m => m.id !== id);
-    this.measurementsSignal.set(filtered);
-    localStorage.setItem('tailor_measurements', JSON.stringify(filtered));
-    this.showToast('Measurement deleted locally!', 'danger');
+    return this.http.delete(`${this.apiUrl}/measurements/${numericId}`).pipe(
+      tap(() => {
+        this.showToast('Measurement deleted successfully!', 'danger');
+        this.refreshData();
+      }),
+      catchError((err) => {
+        const msg = err?.error?.error || err?.error?.message || 'Failed to delete measurement.';
+        this.showToast(msg, 'danger');
+        return of(null);
+      })
+    );
   }
 
   getMeasurementsByMobile(mobile: string): CustomerMeasurement[] {
@@ -396,11 +325,8 @@ export class StorageService {
   }
 
   // --- Bill CRUD ---
-  addBill(bill: Omit<Bill, 'id' | 'billNumber'>): Observable<Bill> {
-    const count = this.billsSignal().length + 1001;
-    const generatedBillNumber = 'INV-' + count;
+  addBill(bill: Omit<Bill, 'id' | 'billNumber'>): Observable<Bill | null> {
     const payload = {
-      billNumber: generatedBillNumber,
       customerName: bill.customerName,
       mobileNumber: bill.mobileNumber,
       date: bill.date,
@@ -419,15 +345,10 @@ export class StorageService {
       }))
     };
 
-    const newBill: Bill = {
-      ...bill,
-      id: 'b-' + Date.now(),
-      billNumber: generatedBillNumber
-    };
-
     return this.http.post<any>(`${this.apiUrl}/billing`, payload).pipe(
       map(res => {
-        this.showToast(`Invoice ${generatedBillNumber} created!`);
+        const billNumber = res.billNumber || 'New Invoice';
+        this.showToast(`Invoice ${billNumber} created!`);
         this.refreshData();
         return {
           id: String(res.id),
@@ -452,12 +373,9 @@ export class StorageService {
         };
       }),
       catchError((err) => {
-        const updated = [newBill, ...this.billsSignal()];
-        this.billsSignal.set(updated);
-        localStorage.setItem('tailor_bills', JSON.stringify(updated));
-        const msg = err?.error?.message || `API Error: Could not save invoice ${generatedBillNumber} on server. Saved locally.`;
+        const msg = err?.error?.error || err?.error?.message || 'Failed to save invoice on server.';
         this.showToast(msg, 'danger');
-        return of(newBill);
+        return of(null);
       })
     );
   }
@@ -486,123 +404,74 @@ export class StorageService {
       }))
     };
 
-    if (!isNaN(numericId)) {
-      return this.http.put(`${this.apiUrl}/billing/${numericId}`, payload).pipe(
-        tap(() => {
-          this.showToast(`Invoice ${payload.billNumber} updated!`);
-          this.refreshData();
-        }),
-        catchError((err) => {
-          this.updateLocalBill(id, bill);
-          const msg = err?.error?.message || `API Error: Could not update invoice ${payload.billNumber} on server. Updated locally.`;
-          this.showToast(msg, 'danger');
-          return of(null);
-        })
-      );
-    } else {
-      this.updateLocalBill(id, bill);
-      return of(null);
-    }
-  }
-
-  private updateLocalBill(id: string, bill: Omit<Bill, 'id' | 'billNumber'>): void {
-    const updated = this.billsSignal().map(b =>
-      b.id === id ? { ...b, ...bill } : b
+    return this.http.put(`${this.apiUrl}/billing/${numericId}`, payload).pipe(
+      tap(() => {
+        this.showToast(`Invoice ${payload.billNumber} updated!`);
+        this.refreshData();
+      }),
+      catchError((err) => {
+        const msg = err?.error?.error || err?.error?.message || `Failed to update invoice ${payload.billNumber}.`;
+        this.showToast(msg, 'danger');
+        return of(null);
+      })
     );
-    this.billsSignal.set(updated);
-    localStorage.setItem('tailor_bills', JSON.stringify(updated));
-    this.showToast('Invoice updated locally!');
   }
 
   deleteBill(id: string): Observable<any> {
     const numericId = Number(id);
-    if (!isNaN(numericId)) {
-      return this.http.delete(`${this.apiUrl}/billing/${numericId}`).pipe(
-        tap(() => {
-          this.showToast('Invoice deleted successfully!', 'danger');
-          this.refreshData();
-        }),
-        catchError((err) => {
-          this.deleteLocalBill(id);
-          const msg = err?.error?.message || 'API Error: Could not delete invoice on server. Deleted locally.';
-          this.showToast(msg, 'danger');
-          return of(null);
-        })
-      );
-    } else {
-      this.deleteLocalBill(id);
-      return of(null);
-    }
-  }
 
-  private deleteLocalBill(id: string): void {
-    const filtered = this.billsSignal().filter(b => b.id !== id);
-    this.billsSignal.set(filtered);
-    localStorage.setItem('tailor_bills', JSON.stringify(filtered));
-    this.showToast('Invoice deleted locally!', 'danger');
+    return this.http.delete(`${this.apiUrl}/billing/${numericId}`).pipe(
+      tap(() => {
+        this.showToast('Invoice deleted successfully!', 'danger');
+        this.refreshData();
+      }),
+      catchError((err) => {
+        const msg = err?.error?.error || err?.error?.message || 'Failed to delete invoice.';
+        this.showToast(msg, 'danger');
+        return of(null);
+      })
+    );
   }
 
   toggleBillPaid(id: string): Observable<Bill | null> {
     const numericId = Number(id);
-    if (!isNaN(numericId)) {
-      return this.http.patch<any>(`${this.apiUrl}/billing/${numericId}/paid`, {}).pipe(
-        map(res => {
-          const isPaid = Boolean(res.paid);
-          const updated = this.billsSignal().map(b =>
-            b.id === id ? { ...b, paid: isPaid } : b
-          );
-          this.billsSignal.set(updated);
-          localStorage.setItem('tailor_bills', JSON.stringify(updated));
-          this.showToast(isPaid ? 'Invoice marked as Paid!' : 'Invoice marked as Unpaid!', 'success');
-          return {
-            id: String(res.id),
-            billNumber: res.billNumber,
-            customerName: res.customerName,
-            mobileNumber: res.mobileNumber,
-            date: res.date,
-            dueDate: res.dueDate,
-            totalAmount: res.totalAmount || 0,
-            discount: res.discount || 0,
-            grandTotal: res.grandTotal || 0,
-            paid: isPaid,
-            notes: res.notes || '',
-            items: (res.items || []).map((it: any) => ({
-              id: String(it.id),
-              clothingTypeId: String(it.clothingTypeId || ''),
-              clothingTypeName: it.clothingTypeName,
-              quantity: it.quantity || 1,
-              price: it.price || 0,
-              description: it.description || ''
-            }))
-          };
-        }),
-        catchError((err) => {
-          const current = this.billsSignal().find(b => b.id === id);
-          if (current) {
-            const nextPaid = !current.paid;
-            const updated = this.billsSignal().map(b =>
-              b.id === id ? { ...b, paid: nextPaid } : b
-            );
-            this.billsSignal.set(updated);
-            localStorage.setItem('tailor_bills', JSON.stringify(updated));
-            this.showToast(nextPaid ? 'Invoice marked as Paid locally!' : 'Invoice marked as Unpaid locally!', 'info');
-          }
-          return of(null);
-        })
-      );
-    } else {
-      const current = this.billsSignal().find(b => b.id === id);
-      if (current) {
-        const nextPaid = !current.paid;
+
+    return this.http.patch<any>(`${this.apiUrl}/billing/${numericId}/paid`, {}).pipe(
+      map(res => {
+        const isPaid = Boolean(res.paid);
         const updated = this.billsSignal().map(b =>
-          b.id === id ? { ...b, paid: nextPaid } : b
+          b.id === id ? { ...b, paid: isPaid } : b
         );
         this.billsSignal.set(updated);
-        localStorage.setItem('tailor_bills', JSON.stringify(updated));
-        this.showToast(nextPaid ? 'Invoice marked as Paid locally!' : 'Invoice marked as Unpaid locally!', 'info');
-      }
-      return of(null);
-    }
+        this.showToast(isPaid ? 'Invoice marked as Paid!' : 'Invoice marked as Unpaid!', 'success');
+        return {
+          id: String(res.id),
+          billNumber: res.billNumber,
+          customerName: res.customerName,
+          mobileNumber: res.mobileNumber,
+          date: res.date,
+          dueDate: res.dueDate,
+          totalAmount: res.totalAmount || 0,
+          discount: res.discount || 0,
+          grandTotal: res.grandTotal || 0,
+          paid: isPaid,
+          notes: res.notes || '',
+          items: (res.items || []).map((it: any) => ({
+            id: String(it.id),
+            clothingTypeId: String(it.clothingTypeId || ''),
+            clothingTypeName: it.clothingTypeName,
+            quantity: it.quantity || 1,
+            price: it.price || 0,
+            description: it.description || ''
+          }))
+        };
+      }),
+      catchError((err) => {
+        const msg = err?.error?.error || err?.error?.message || 'Failed to update invoice payment status.';
+        this.showToast(msg, 'danger');
+        return of(null);
+      })
+    );
   }
 
   getMeasurementsPage(page: number, size: number, search: string, clothingTypeId: string): Observable<PagedResult<CustomerMeasurement>> {
@@ -630,22 +499,16 @@ export class StorageService {
         };
       }),
       catchError((err) => {
-        this.showToast('API Error: Could not fetch measurements page from server.', 'danger');
-        const all = this.measurementsSignal();
-        const filtered = all.filter(m => {
-          const matchSearch = !search || m.customerName.toLowerCase().includes(search.toLowerCase()) || m.mobileNumber.includes(search);
-          const matchType = !clothingTypeId || m.clothingTypeId === clothingTypeId;
-          return matchSearch && matchType;
-        });
-        const start = page * size;
-        const pageItems = filtered.slice(start, start + size);
+        if (err?.status !== 401) {
+          this.showToast('API Error: Could not fetch measurements from server.', 'danger');
+        }
         return of({
-          content: pageItems,
+          content: [],
           pageNumber: page,
           pageSize: size,
-          totalElements: filtered.length,
-          totalPages: Math.ceil(filtered.length / size),
-          last: start + size >= filtered.length
+          totalElements: 0,
+          totalPages: 0,
+          last: true
         });
       })
     );
@@ -670,7 +533,7 @@ export class StorageService {
           items: (item.items || []).map((it: any) => ({
             id: String(it.id),
             clothingTypeId: String(it.clothingTypeId || ''),
-            clothingTypeName: it.clothingTypeName,
+            clothingTypeName: item.clothingTypeName,
             quantity: it.quantity || 1,
             price: it.price || 0,
             description: it.description || ''
@@ -686,35 +549,25 @@ export class StorageService {
         };
       }),
       catchError((err) => {
-        this.showToast('API Error: Could not fetch billing records from server.', 'danger');
-        const all = this.billsSignal();
-        const filtered = all.filter(b => {
-          return !search || b.billNumber.toLowerCase().includes(search.toLowerCase()) ||
-                 b.customerName.toLowerCase().includes(search.toLowerCase()) ||
-                 b.mobileNumber.includes(search);
-        });
-        const start = page * size;
-        const pageItems = filtered.slice(start, start + size);
+        if (err?.status !== 401) {
+          this.showToast('API Error: Could not fetch billing records from server.', 'danger');
+        }
         return of({
-          content: pageItems,
+          content: [],
           pageNumber: page,
           pageSize: size,
-          totalElements: filtered.length,
-          totalPages: Math.ceil(filtered.length / size),
-          last: start + size >= filtered.length
+          totalElements: 0,
+          totalPages: 0,
+          last: true
         });
       })
     );
   }
 
   // --- Invoice Draft DB Endpoints ---
-  saveDraft(draft: InvoiceDraft): Observable<InvoiceDraft> {
+  saveDraft(draft: InvoiceDraft): Observable<InvoiceDraft | null> {
     return this.http.post<InvoiceDraft>(`${this.apiUrl}/drafts`, draft).pipe(
-      catchError((err) => {
-        // Fallback to in-memory draft object with temp id if offline
-        const tempId = draft.id || 'draft_' + Date.now();
-        return of({ ...draft, id: tempId });
-      })
+      catchError(() => of(null))
     );
   }
 
@@ -729,14 +582,4 @@ export class StorageService {
       catchError(() => of(undefined))
     );
   }
-}
-
-
-export interface PagedResult<T> {
-  content: T[];
-  pageNumber: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
 }

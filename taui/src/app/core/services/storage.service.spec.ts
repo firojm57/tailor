@@ -70,15 +70,15 @@ describe('StorageService', () => {
 
   // ── Initial signal state ──────────────────────────────────────────────────
 
-  it('clothingTypes() should be empty when localStorage is empty', () => {
+  it('clothingTypes() should be initially empty', () => {
     expect(service.clothingTypes()).toEqual([]);
   });
 
-  it('measurements() should be empty when localStorage is empty', () => {
+  it('measurements() should be initially empty', () => {
     expect(service.measurements()).toEqual([]);
   });
 
-  it('bills() should be empty when localStorage is empty', () => {
+  it('bills() should be initially empty', () => {
     expect(service.bills()).toEqual([]);
   });
 
